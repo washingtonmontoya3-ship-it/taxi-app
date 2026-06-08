@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedir Taxi</title>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+    color: #facc15;
+  }
+  .subtitle {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid #334155;
+  }
+  .card h2 {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.78rem;
+  }
+  /* Taxi list */
+  .taxi-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #334155;
+  }
+  .taxi-item:last-child { border-bottom: none; }
+  .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot.disponible { background: #22c55e; box-shadow: 0 0 8px #22c55e88; }
+  .dot.ocupado    { background: #ef4444; box-shadow: 0 0 8px #ef444488; }
+  .taxi-name { font-weight: 600; font-size: 0.95rem; }
+  .taxi-status {
+    margin-left: auto;
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+  .taxi-status.disponible { background: #14532d; color: #86efac; }
+  .taxi-status.ocupado    { background: #450a0a; color: #fca5a5; }
+  .no-taxis {
+    text-align: center;
+    color: #475569;
+    padding: 20px 0;
+    font-size: 0.9rem;
+  }
+  /* Form */
+  label {
+    display: block;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+  label:first-of-type { margin-top: 0; }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    color: #f1f5f9;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: #facc15; }
+  .btn-ubicacion {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    color: #94a3b8;
+    padding: 10px 14px;
+    width: 100%;
+    cursor: pointer;
+    margin-top: 14px;
+    font-size: 0.88rem;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-ubicacion.activo {
+    border-color: #22c55e;
+    color: #22c55e;
+  }
+  .btn-pedir {
+    width: 100%;
+    padding: 15px;
+    background: #facc15;
+    color: #0f172a;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 18px;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-pedir:hover { background: #fde047; }
+  .btn-pedir:active { transform: scale(0.98); }
+  .btn-pedir:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+  /* Status */
+  #estado {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    border-radius: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  #estado.espera   { background: #1c1f14; color: #a3e635; border: 1px solid #4d7c0f; }
+  #estado.aceptada { background: #14532d; color: #86efac; border: 1px solid #15803d; display: block; }
+  #estado.rechazada{ background: #450a0a; color: #fca5a5; border: 1px solid #991b1b; display: block; }
+  #estado.sinTaxis { background: #1e1b4b; color: #a5b4fc; border: 1px solid #4338ca; display: block; }
+  .spinner {
+    display: inline-block;
+    width: 18px; height: 18px;
+    border: 3px solid #a3e63544;
+    border-top-color: #a3e635;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<h1>🚕 Pedir Taxi</h1>
+<p class="subtitle">Servicio de transporte local</p>
+
+<!-- Estado de solicitud -->
+<div id="estado"></div>
+
+<!-- Taxis disponibles -->
+<div class="card">
+  <h2>🟢 Taxis activos</h2>
+  <div id="lista-taxis">
+    <p class="no-taxis">Buscando taxis...</p>
+  </div>
+</div>
+
+<!-- Formulario de solicitud -->
+<div class="card" id="formulario">
+  <h2>✏️ Tu información</h2>
+  <label>Tu nombre</label>
+  <input type="text" id="nombre" placeholder="Ej: María García">
+  <label>Teléfono (opcional)</label>
+  <input type="tel" id="telefono" placeholder="Ej: 099 123 4567">
+  <button class="btn-ubicacion" id="btn-ubic" onclick="obtenerUbicacion()">
+    📍 Compartir mi ubicación
+  </button>
+  <button class="btn-pedir" id="btn-pedir" onclick="pedirTaxi()">
+    Solicitar Taxi
+  </button>
+</div>
+
+<script>
+  const socket = io();
+  let miLat = null, miLng = null;
+  let solicitando = false;
+
+  socket.on('taxis:actualizar', (lista) => {
+    const div = document.getElementById('lista-taxis');
+    if (lista.length === 0) {
+      div.innerHTML = '<p class="no-taxis">No hay taxis registrados aún</p>';
+      return;
+    }
+    div.innerHTML = lista.map(t => `
+      <div class="taxi-item">
+        <div class="dot ${t.disponible ? 'disponible' : 'ocupado'}"></div>
+        <span class="taxi-name">${t.nombre}</span>
+        <span class="taxi-status ${t.disponible ? 'disponible' : 'ocupado'}">
+          ${t.disponible ? 'Disponible' : 'Ocupado'}
+        </span>
+      </div>
+    `).join('');
+  });
+
+  socket.on('solicitud:enviada', ({ taxiNombre }) => {
+    mostrarEstado('espera', `<span class="spinner"></span> Esperando respuesta de ${taxiNombre}...`);
+    document.getElementById('formulario').style.opacity = '0.4';
+    document.getElementById('btn-pedir').disabled = true;
+  });
+
+  socket.on('solicitud:aceptada', ({ choferNombre, choferNumero }) => {
+    const tel = choferNumero ? `<br><small>📞 ${choferNumero}</small>` : '';
+    mostrarEstado('aceptada', `✅ ¡${choferNombre} aceptó tu solicitud! Ya va en camino.${tel}`);
+    document.getElementById('formulario').style.opacity = '1';
+    document.getElementById('btn-pedir').disabled = false;
+    solicitando = false;
+  });
+
+  socket.on('solicitud:rechazada', () => {
+    mostrarEstado('rechazada', '❌ El chofer no pudo aceptar. Intenta de nuevo.');
+    document.getElementById('formulario').style.opacity = '1';
+    document.getElementById('btn-pedir').disabled = false;
+    solicitando = false;
+  });
+
+  socket.on('solicitud:sinTaxis', () => {
+    mostrarEstado('sinTaxis', '😔 No hay taxis disponibles en este momento.');
+    document.getElementById('btn-pedir').disabled = false;
+    solicitando = false;
+  });
+
+  function mostrarEstado(tipo, texto) {
+    const el = document.getElementById('estado');
+    el.className = tipo;
+    el.innerHTML = texto;
+    el.style.display = 'block';
+  }
+
+  function obtenerUbicacion() {
+    if (!navigator.geolocation) {
+      alert('Tu navegador no soporta geolocalización.');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        miLat = pos.coords.latitude;
+        miLng = pos.coords.longitude;
+        const btn = document.getElementById('btn-ubic');
+        btn.textContent = '✅ Ubicación compartida';
+        btn.classList.add('activo');
+      },
+      () => alert('No se pudo obtener tu ubicación.')
+    );
+  }
+
+  function pedirTaxi() {
+    if (solicitando) return;
+    const nombre = document.getElementById('nombre').value.trim();
+    const telefono = document.getElementById('telefono').value.trim();
+    if (!nombre) {
+      alert('Por favor ingresa tu nombre.');
+      document.getElementById('nombre').focus();
+      return;
+    }
+    solicitando = true;
+    document.getElementById('btn-pedir').disabled = true;
+    socket.emit('cliente:solicitar', { nombre, telefono, lat: miLat, lng: miLng });
+  }
+</script>
+</body>
+</html>
