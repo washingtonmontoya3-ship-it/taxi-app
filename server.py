@@ -300,6 +300,16 @@ def chofer_terminar_turno():
     emit('chofer:turno_terminado')
 
 
+@socketio.on('voz:enviar')
+def voz_enviar(data):
+    cliente_sid = data.get('clienteSocketId')
+    socketio.emit('voz:recibida', {
+        'audio': data.get('audio'),
+        'mimeType': data.get('mimeType'),
+    }, to=cliente_sid)
+    print('[VOZ] Mensaje de voz enviado al cliente')
+
+
 @socketio.on('historial:limpiar')
 def historial_limpiar():
     historial.clear()

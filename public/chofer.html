@@ -56,6 +56,12 @@
   .btn-rechazar:active { background: #475569; }
   .btn-maps { width: 100%; padding: 13px; background: #1d4ed8; color: white; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 10px; }
   .btn-completar { width: 100%; padding: 15px; background: #7c3aed; color: white; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px; display: none; }
+  /* Voz */
+  .voz-wrap { display: none; margin-top: 12px; text-align: center; }
+  .btn-voz { width: 100%; padding: 14px; background: #0f172a; border: 2px solid #334155; border-radius: 14px; color: #94a3b8; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; user-select: none; -webkit-user-select: none; transition: background 0.15s, border-color 0.15s; }
+  .btn-voz.grabando { background: #7f1d1d; border-color: #ef4444; color: #fca5a5; animation: pulsoVoz 0.8s ease infinite; }
+  @keyframes pulsoVoz { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
+  .voz-estado { font-size: 0.78rem; color: #64748b; margin-top: 6px; }
   .btn-ubic { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid #334155; border-radius: 10px; color: #94a3b8; padding: 10px 14px; width: 100%; cursor: pointer; margin-top: 12px; font-size: 0.88rem; }
   .btn-ubic.activo { border-color: #22c55e; color: #22c55e; }
   .btn-turno { width: 100%; padding: 13px; background: transparent; color: #f87171; border: 2px solid #7f1d1d; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 12px; transition: background 0.2s; }
@@ -169,6 +175,12 @@
       <button class="btn-rechazar" onclick="rechazar()">❌ Rechazar</button>
     </div>
     <button class="btn-maps" id="btn-maps" onclick="abrirMaps()" style="display:none">🗺️ Abrir ruta en Google Maps</button>
+    <div class="voz-wrap" id="voz-wrap">
+      <button class="btn-voz" id="btn-voz" ontouchstart="iniciarGrabacion()" ontouchend="enviarVoz()" onmousedown="iniciarGrabacion()" onmouseup="enviarVoz()">
+        🎤 <span id="voz-label">Mantén para grabar mensaje de voz</span>
+      </button>
+      <div class="voz-estado" id="voz-estado"></div>
+    </div>
     <button class="btn-completar" id="btn-completar" onclick="completarCarrera()">🏁 Marcar carrera completada</button>
   </div>
 </div>
@@ -382,9 +394,9 @@
     document.getElementById('estado-label').textContent = '🔴 Ocupado';
     document.getElementById('btns-responder').style.display = 'none';
     if (solicitudActual.lat) document.getElementById('btn-maps').style.display = 'block';
+    document.getElementById('voz-wrap').style.display = 'block';
     document.getElementById('btn-completar').style.display = 'block';
     toast('Carrera aceptada');
-    // Mantener overlay abierto para mostrar mapa y completar
   }
 
   function rechazar() {
@@ -404,6 +416,7 @@
     socket.emit('chofer:completar');
     solicitudActual = null;
     document.getElementById('solicitud-overlay').classList.remove('activa');
+    document.getElementById('voz-wrap').style.display = 'none';
     document.getElementById('toggle-disp').checked = true;
     document.getElementById('toggle-wrap').classList.add('activo');
     document.getElementById('estado-label').textContent = '🟢 Disponible';
@@ -500,6 +513,56 @@
     el.textContent = msg; el.classList.add('show');
     setTimeout(() => el.classList.remove('show'), 3000);
   }
+
+  // ── Mensaje de voz ──
+  let mediaRecorder = null, audioChunks = [];
+
+  async function iniciarGrabacion() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+      mediaRecorder = new MediaRecorder(stream, { mimeType });
+      audioChunks = [];
+      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+      mediaRecorder.start();
+      const btn = document.getElementById('btn-voz');
+      btn.classList.add('grabando');
+      document.getElementById('voz-label').textContent = '🔴 Grabando... suelta para enviar';
+      document.getElementById('voz-estado').textContent = '';
+    } catch(e) {
+      document.getElementById('voz-estado').textContent = 'No se pudo acceder al micrófono';
+    }
+  }
+
+  function enviarVoz() {
+    if (!mediaRecorder || mediaRecorder.state !== 'recording') return;
+    mediaRecorder.stop();
+    mediaRecorder.stream.getTracks().forEach(t => t.stop());
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (!solicitudActual) return;
+        socket.emit('voz:enviar', {
+          clienteSocketId: solicitudActual.clienteSocketId,
+          audio: reader.result,
+          mimeType: mediaRecorder.mimeType,
+        });
+        document.getElementById('voz-estado').textContent = 'Mensaje enviado';
+        setTimeout(() => { document.getElementById('voz-estado').textContent = ''; }, 2500);
+      };
+      reader.readAsDataURL(blob);
+      const btn = document.getElementById('btn-voz');
+      btn.classList.remove('grabando');
+      document.getElementById('voz-label').textContent = 'Mantén para grabar mensaje de voz';
+    };
+  }
+
+  socket.on('voz:recibida', ({ audio, mimeType }) => {
+    const audioEl = new Audio(audio);
+    audioEl.play().catch(() => {});
+  });
 </script>
 </body>
 </html>

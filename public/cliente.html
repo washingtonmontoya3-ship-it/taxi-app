@@ -478,6 +478,12 @@
     } catch(e) {}
   }
 
+  socket.on('voz:recibida', ({ audio }) => {
+    const audioEl = new Audio(audio);
+    audioEl.play().catch(() => {});
+    mostrarEstado('aceptada', document.getElementById('estado').innerHTML + '<br><small>🎤 El chofer te envió un mensaje de voz</small>');
+  });
+
   function sonarConfirmacion() {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
