@@ -518,35 +518,43 @@
   let mediaRecorder = null, audioChunks = [];
 
   function reproducirVozChofer(audio) {
-    fetch(audio).then(r => r.blob()).then(blob => {
+    try {
+      const mime = audio.split(';')[0].replace('data:', '');
+      const b64 = audio.split(',')[1];
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const blob = new Blob([arr], { type: mime });
       const url = URL.createObjectURL(blob);
       const audioEl = new Audio(url);
       audioEl.volume = 1.0;
-      audioEl.play().catch(() => {});
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      ctx.resume().then(() => {
+        const src = ctx.createMediaElementSource(audioEl);
+        const gain = ctx.createGain();
+        gain.gain.value = 10;
+        src.connect(gain);
+        gain.connect(ctx.destination);
+        audioEl.play().catch(() => {});
+      });
       audioEl.onended = () => URL.revokeObjectURL(url);
-    }).catch(() => {
+    } catch(e) {
       const audioEl = new Audio(audio);
       audioEl.volume = 1.0;
       audioEl.play().catch(() => {});
-    });
+    }
   }
 
   async function iniciarGrabacion() {
     if (mediaRecorder && mediaRecorder.state === 'recording') return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const src = ctx.createMediaStreamSource(stream);
-      const gain = ctx.createGain();
-      gain.gain.value = 4;
-      const dest = ctx.createMediaStreamDestination();
-      src.connect(gain); gain.connect(dest);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
                      : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
-      mediaRecorder = new MediaRecorder(dest.stream, { mimeType });
+      mediaRecorder = new MediaRecorder(stream, { mimeType });
       audioChunks = [];
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
-      mediaRecorder.start(100);
+      mediaRecorder.start();
       const btn = document.getElementById('btn-voz');
       btn.classList.add('grabando');
       document.getElementById('voz-label').textContent = '🔴 Grabando... suelta para enviar';
