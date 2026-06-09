@@ -206,10 +206,38 @@
 <div id="toast"></div>
 
 <script>
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+  let swRegistration = null;
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').then(reg => { swRegistration = reg; });
+  }
   const socket = io();
   let solicitudActual = null, watchId = null;
   let historialData = [], histAnterior = 0;
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  }
+
+  async function activarNotificaciones() {
+    try {
+      if (!('Notification' in window) || !('PushManager' in window)) return;
+      const permiso = await Notification.requestPermission();
+      if (permiso !== 'granted') return;
+      if (!swRegistration) return;
+      const resp = await fetch('/api/vapid-public-key');
+      const { key } = await resp.json();
+      const sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key),
+      });
+      socket.emit('chofer:suscribir', sub.toJSON());
+    } catch (e) {
+      console.warn('Push no disponible:', e);
+    }
+  }
 
   // ── Tabs ──
   function cambiarTab(tab) {
@@ -244,6 +272,7 @@
     document.getElementById('perfil-nombre').textContent = nombre;
     document.getElementById('perfil-numero').textContent = numero || 'Sin número registrado';
     toast('Conectado! Ya puedes recibir solicitudes.');
+    activarNotificaciones();
   });
 
   function terminarTurno() {

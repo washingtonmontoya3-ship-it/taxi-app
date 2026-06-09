@@ -2,19 +2,31 @@
 import sys
 import math
 import datetime
+import json
+import threading
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import socket as sock
 from flask import Flask, send_from_directory, request, jsonify
 from flask_socketio import SocketIO, emit
+from pywebpush import webpush, WebPushException
+
+VAPID_PRIVATE_KEY = """-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIP3Rh9H/CxIfKskSN2lcmvgS90SuoWLIjrxFsITFEtN8oAoGCCqGSM49
+AwEHoUQDQgAESMzfjzY1k/UiZq5EhMjXZYaEsd5yqzXudnqeyffezyupl1buIsfd
+67dLWXpFwUsp56VQxBfIgAnRbzvI71viYA==
+-----END EC PRIVATE KEY-----"""
+VAPID_PUBLIC_KEY = "BEjM3482NZP1ImauRITI12WGhLHecqs17nZ6nsn33s8rqZdW7iLH3eu3S1l6RcFLKeelUMQXyIAJ0W87yO9b4mA"
+VAPID_EMAIL = "mailto:washingtonmontoya3@gmail.com"
 
 app = Flask(__name__, static_folder='public')
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='threading')
 
 # Estado del sistema en memoria
-taxis = {}       # sid -> dict con datos del chofer
-solicitudes = {} # clienteSid -> dict con datos del cliente
-historial = []   # lista de carreras completadas
+taxis = {}         # sid -> dict con datos del chofer
+solicitudes = {}   # clienteSid -> dict con datos del cliente
+historial = []     # lista de carreras completadas
+suscripciones = {} # sid -> push subscription dict
 
 
 def get_local_ip():
@@ -48,6 +60,10 @@ def index():
 def api_historial():
     return jsonify(historial)
 
+@app.route('/api/vapid-public-key')
+def vapid_public_key():
+    return jsonify({'key': VAPID_PUBLIC_KEY})
+
 @app.route('/<path:filename>')
 def static_files(filename):
     return send_from_directory('public', filename)
@@ -71,6 +87,7 @@ def on_disconnect():
         socketio.emit('taxis:actualizar', list(taxis.values()))
     if sid in solicitudes:
         del solicitudes[sid]
+    suscripciones.pop(sid, None)
     print(f'[-] Desconectado: {sid}')
 
 
@@ -182,6 +199,32 @@ def emergencia_activar(data):
     })
 
 
+@socketio.on('chofer:suscribir')
+def chofer_suscribir(data):
+    sid = request.sid
+    suscripciones[sid] = data
+    print(f'[PUSH] Suscripcion guardada para {taxis.get(sid, {}).get("nombre", sid)}')
+
+
+def enviar_push(sid, titulo, cuerpo):
+    sub = suscripciones.get(sid)
+    if not sub:
+        return
+    def _send():
+        try:
+            webpush(
+                subscription_info=sub,
+                data=json.dumps({'title': titulo, 'body': cuerpo}),
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={'sub': VAPID_EMAIL},
+            )
+        except WebPushException as e:
+            print(f'[PUSH] Error enviando notificacion: {e}')
+        except Exception as e:
+            print(f'[PUSH] Error inesperado: {e}')
+    threading.Thread(target=_send, daemon=True).start()
+
+
 @socketio.on('chofer:terminar_turno')
 def chofer_terminar_turno():
     sid = request.sid
@@ -238,6 +281,10 @@ def cliente_solicitar(data):
         'lat': lat,
         'lng': lng,
     }, to=elegido['id'])
+
+    # Push notification al chofer por si la app está en segundo plano
+    nombre_cliente = data.get('nombre') or 'un cliente'
+    enviar_push(elegido['id'], 'Nueva solicitud de carrera', f'{nombre_cliente} necesita un taxi')
 
     emit('solicitud:enviada', {'taxiNombre': elegido['nombre']})
     print(f'[SOLICITUD] {data.get("nombre")} -> {elegido["nombre"]}')
