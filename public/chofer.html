@@ -421,8 +421,26 @@
     card.classList.add('activa');
     // Vibración en móvil
     if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
-    toast('📍 ¡Nueva solicitud de carrera!');
+    sonarAlerта();
+    toast('Nueva solicitud de carrera!');
   });
+
+  function sonarAlerта() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.3, 0.6].forEach(t => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.5, ctx.currentTime + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
+        osc.start(ctx.currentTime + t);
+        osc.stop(ctx.currentTime + t + 0.25);
+      });
+    } catch(e) {}
+  }
 
   function aceptar() {
     if (!solicitudActual) return;

@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import sys
 import math
+import datetime
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 import socket as sock
-from flask import Flask, send_from_directory, request
+from flask import Flask, send_from_directory, request, jsonify
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__, static_folder='public')
@@ -13,6 +14,7 @@ socketio = SocketIO(app, cors_allowed_origins='*', async_mode='threading')
 # Estado del sistema en memoria
 taxis = {}       # sid -> dict con datos del chofer
 solicitudes = {} # clienteSid -> dict con datos del cliente
+historial = []   # lista de carreras completadas
 
 
 def get_local_ip():
@@ -41,6 +43,10 @@ def haversine(lat1, lng1, lat2, lng2):
 @app.route('/')
 def index():
     return send_from_directory('public', 'cliente.html')
+
+@app.route('/api/historial')
+def api_historial():
+    return jsonify(historial)
 
 @app.route('/<path:filename>')
 def static_files(filename):
@@ -129,9 +135,32 @@ def chofer_rechazar(data):
 def chofer_completar():
     sid = request.sid
     if sid in taxis:
+        nombre_chofer = taxis[sid]['nombre']
         taxis[sid]['disponible'] = True
         socketio.emit('taxis:actualizar', list(taxis.values()))
-        print(f'[CHOFER] {taxis[sid]["nombre"]} completó carrera')
+        print(f'[CHOFER] {nombre_chofer} completo carrera')
+
+        # Guardar en historial
+        sol = solicitudes.get(sid) or {}
+        ahora = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
+        entrada = {
+            'fecha': ahora,
+            'chofer': nombre_chofer,
+            'cliente': sol.get('nombre', 'Desconocido'),
+            'telefono': sol.get('telefono', '-'),
+        }
+        historial.insert(0, entrada)
+        # Máximo 100 registros
+        if len(historial) > 100:
+            historial.pop()
+        socketio.emit('historial:actualizar', historial)
+
+
+@socketio.on('historial:limpiar')
+def historial_limpiar():
+    historial.clear()
+    socketio.emit('historial:actualizar', historial)
+    print('[HISTORIAL] Limpiado')
 
 
 # ── CLIENTE ─────────────────────────────────────────────────
@@ -148,7 +177,6 @@ def cliente_solicitar(data):
     lat = data.get('lat')
     lng = data.get('lng')
 
-    # Elegir el más cercano si el cliente compartió ubicación
     elegido = disponibles[0]
     if lat and lng:
         def distancia_a(taxi):
@@ -164,6 +192,8 @@ def cliente_solicitar(data):
         'lat': lat,
         'lng': lng,
     }
+    # Guardar la solicitud también asociada al chofer para el historial
+    solicitudes[elegido['id']] = solicitudes[sid]
 
     socketio.emit('solicitud:nueva', {
         'clienteSocketId': sid,
@@ -191,5 +221,6 @@ if __name__ == '__main__':
     print('----------------------------------------')
     print(f'  Cliente: http://{ip}:{port}/cliente.html')
     print(f'  Chofer:  http://{ip}:{port}/chofer.html')
+    print(f'  Historial: http://{ip}:{port}/historial.html')
     print('========================================\n')
     socketio.run(app, host='0.0.0.0', port=port, debug=False, use_reloader=False, log_output=False, allow_unsafe_werkzeug=True)

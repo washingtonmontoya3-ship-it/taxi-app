@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Historial de Carreras</title>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: #f1f5f9;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  h1 { text-align: center; font-size: 1.5rem; color: #facc15; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #94a3b8; font-size: 0.85rem; margin-bottom: 24px; }
+  .contador {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-bottom: 16px;
+  }
+  .carrera {
+    background: #1e293b;
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #334155;
+    animation: entrada 0.3s ease;
+  }
+  @keyframes entrada {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .carrera-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .carrera-num {
+    font-size: 0.75rem;
+    background: #facc15;
+    color: #0f172a;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-weight: 700;
+  }
+  .carrera-fecha { font-size: 0.78rem; color: #64748b; }
+  .carrera-fila {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+    font-size: 0.88rem;
+  }
+  .carrera-fila .icono { width: 20px; text-align: center; flex-shrink: 0; }
+  .carrera-fila .valor { color: #e2e8f0; }
+  .vacio {
+    text-align: center;
+    color: #475569;
+    padding: 40px 20px;
+    font-size: 0.9rem;
+  }
+  .nav {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .nav a {
+    padding: 8px 18px;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 20px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.82rem;
+  }
+  .nav a:hover { border-color: #facc15; color: #facc15; }
+  .btn-limpiar {
+    display: block;
+    margin: 20px auto 0;
+    padding: 10px 24px;
+    background: #450a0a;
+    color: #fca5a5;
+    border: 1px solid #991b1b;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>Historial de Carreras</h1>
+<p class="subtitle">Registro de carreras completadas</p>
+
+<div class="nav">
+  <a href="/cliente.html">Cliente</a>
+  <a href="/chofer.html">Chofer</a>
+</div>
+
+<div class="contador" id="contador">Cargando...</div>
+<div id="lista"></div>
+<button class="btn-limpiar" onclick="limpiar()" id="btn-limpiar" style="display:none">Limpiar historial</button>
+
+<script>
+  const socket = io();
+  let carreras = [];
+
+  fetch('/api/historial')
+    .then(r => r.json())
+    .then(data => renderizar(data));
+
+  socket.on('historial:actualizar', (data) => renderizar(data));
+
+  function renderizar(data) {
+    carreras = data;
+    const lista = document.getElementById('lista');
+    const contador = document.getElementById('contador');
+    const btnLimpiar = document.getElementById('btn-limpiar');
+
+    if (data.length === 0) {
+      lista.innerHTML = '<div class="vacio">Todavia no hay carreras completadas.<br>Aqui apareceran cuando los choferes marquen "Carrera completada".</div>';
+      contador.textContent = 'Sin registros aun';
+      btnLimpiar.style.display = 'none';
+      return;
+    }
+
+    contador.textContent = `Total: ${data.length} carrera${data.length !== 1 ? 's' : ''} completada${data.length !== 1 ? 's' : ''}`;
+    btnLimpiar.style.display = 'block';
+
+    lista.innerHTML = data.map((c, i) => `
+      <div class="carrera">
+        <div class="carrera-header">
+          <span class="carrera-num">#${data.length - i}</span>
+          <span class="carrera-fecha">${c.fecha}</span>
+        </div>
+        <div class="carrera-fila"><span class="icono">🚖</span><span class="valor">${c.chofer}</span></div>
+        <div class="carrera-fila"><span class="icono">👤</span><span class="valor">${c.cliente}</span></div>
+        <div class="carrera-fila"><span class="icono">📞</span><span class="valor">${c.telefono || '-'}</span></div>
+      </div>
+    `).join('');
+  }
+
+  function limpiar() {
+    if (confirm('Seguro que deseas borrar todo el historial?')) {
+      socket.emit('historial:limpiar');
+    }
+  }
+</script>
+</body>
+</html>

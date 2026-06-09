@@ -221,7 +221,25 @@
     document.getElementById('formulario').style.opacity = '1';
     document.getElementById('btn-pedir').disabled = false;
     solicitando = false;
+    sonarConfirmacion();
   });
+
+  function sonarConfirmacion() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [440, 550, 660].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.2);
+        osc.start(ctx.currentTime + i * 0.18);
+        osc.stop(ctx.currentTime + i * 0.18 + 0.2);
+      });
+    } catch(e) {}
+  }
 
   socket.on('solicitud:rechazada', () => {
     mostrarEstado('rechazada', '❌ El chofer no pudo aceptar. Intenta de nuevo.');
