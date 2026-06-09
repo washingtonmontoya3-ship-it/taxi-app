@@ -255,8 +255,18 @@
   // Cargar datos guardados al abrir la app
   const nombreGuardado = localStorage.getItem('chofer_nombre');
   const numeroGuardado = localStorage.getItem('chofer_numero');
+  const choferActivo   = localStorage.getItem('chofer_activo') === 'true';
   if (nombreGuardado) document.getElementById('reg-nombre').value = nombreGuardado;
   if (numeroGuardado) document.getElementById('reg-numero').value = numeroGuardado;
+
+  // Auto-registrar al conectar/reconectar si el chofer estaba activo
+  socket.on('connect', () => {
+    if (localStorage.getItem('chofer_activo') === 'true') {
+      const nombre = localStorage.getItem('chofer_nombre');
+      const numero = localStorage.getItem('chofer_numero');
+      if (nombre) socket.emit('chofer:registrar', { nombre, numero });
+    }
+  });
 
   // ── Registro ──
   function registrar() {
@@ -265,6 +275,7 @@
     if (!nombre) { alert('Por favor ingresa tu nombre.'); document.getElementById('reg-nombre').focus(); return; }
     localStorage.setItem('chofer_nombre', nombre);
     localStorage.setItem('chofer_numero', numero);
+    localStorage.setItem('chofer_activo', 'true');
     socket.emit('chofer:registrar', { nombre, numero });
     document.getElementById('reg-nombre').disabled = true;
     document.getElementById('reg-numero').disabled = true;
@@ -272,14 +283,15 @@
   }
 
   socket.on('chofer:registrado', () => {
-    const nombre = document.getElementById('reg-nombre').value.trim();
-    const numero = document.getElementById('reg-numero').value.trim();
+    const nombre = localStorage.getItem('chofer_nombre') || document.getElementById('reg-nombre').value.trim();
+    const numero = localStorage.getItem('chofer_numero') || document.getElementById('reg-numero').value.trim();
+    document.getElementById('turno-terminado-card').style.display = 'none';
     document.getElementById('registro-card').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
     document.getElementById('avatar-letra').textContent = nombre.charAt(0).toUpperCase();
     document.getElementById('perfil-nombre').textContent = nombre;
     document.getElementById('perfil-numero').textContent = numero || 'Sin número registrado';
-    toast('Conectado! Ya puedes recibir solicitudes.');
+    toast('Conectado. Ya puedes recibir solicitudes.');
     activarNotificaciones();
   });
 
@@ -289,6 +301,7 @@
   }
 
   socket.on('chofer:turno_terminado', () => {
+    localStorage.setItem('chofer_activo', 'false');
     if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
     document.getElementById('dashboard').style.display = 'none';
     document.getElementById('registro-card').style.display = 'none';
