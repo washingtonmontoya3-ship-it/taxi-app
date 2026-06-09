@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pedir Taxi</title>
+<link rel="manifest" href="/manifest-cliente.json">
+<meta name="theme-color" content="#facc15">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pedir Taxi">
+<link rel="apple-touch-icon" href="/icon-cliente.svg">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -188,6 +193,7 @@
 </div>
 
 <script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
   const socket = io();
   let miLat = null, miLng = null;
   let solicitando = false;

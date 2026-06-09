@@ -1,0 +1,13 @@
+{
+  "name": "Pedir Taxi",
+  "short_name": "Pedir Taxi",
+  "description": "Solicita un taxi rapido y facil",
+  "start_url": "/cliente.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#facc15",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-cliente.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

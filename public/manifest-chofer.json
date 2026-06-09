@@ -1,0 +1,13 @@
+{
+  "name": "Taxi Chofer",
+  "short_name": "Taxi Chofer",
+  "description": "Panel del chofer para gestionar carreras",
+  "start_url": "/chofer.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon-chofer.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

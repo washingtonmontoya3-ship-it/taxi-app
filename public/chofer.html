@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel del Chofer</title>
+<title>Taxi Chofer</title>
+<link rel="manifest" href="/manifest-chofer.json">
+<meta name="theme-color" content="#3b82f6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Taxi Chofer">
+<link rel="apple-touch-icon" href="/icon-chofer.svg">
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,7 +23,7 @@
     text-align: center;
     font-size: 1.6rem;
     margin-bottom: 4px;
-    color: #facc15;
+    color: #60a5fa;
   }
   .subtitle {
     text-align: center;
@@ -59,12 +64,12 @@
     outline: none;
     transition: border-color 0.2s;
   }
-  input:focus { border-color: #facc15; }
+  input:focus { border-color: #3b82f6; }
   .btn-registrar {
     width: 100%;
     padding: 13px;
-    background: #facc15;
-    color: #0f172a;
+    background: #3b82f6;
+    color: #ffffff;
     border: none;
     border-radius: 12px;
     font-size: 1rem;
@@ -73,7 +78,7 @@
     margin-top: 18px;
     transition: background 0.2s;
   }
-  .btn-registrar:hover { background: #fde047; }
+  .btn-registrar:hover { background: #60a5fa; }
 
   /* Dashboard (oculto hasta registrarse) */
   #dashboard { display: none; }
@@ -85,8 +90,8 @@
   }
   .avatar {
     width: 50px; height: 50px;
-    background: #facc15;
-    color: #0f172a;
+    background: #3b82f6;
+    color: #ffffff;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -345,6 +350,7 @@
 <div id="toast"></div>
 
 <script>
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
   const socket = io();
   let solicitudActual = null;
   let watchId = null;
