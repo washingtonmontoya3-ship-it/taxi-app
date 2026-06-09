@@ -17,210 +17,174 @@
     background: #0f172a;
     color: #f1f5f9;
     min-height: 100vh;
-    padding: 20px;
+    padding: 20px 20px 90px;
   }
-  h1 {
-    text-align: center;
-    font-size: 1.6rem;
-    margin-bottom: 4px;
-    color: #facc15;
-  }
-  .subtitle {
-    text-align: center;
-    color: #94a3b8;
-    font-size: 0.85rem;
-    margin-bottom: 24px;
-  }
-  .card {
-    background: #1e293b;
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    border: 1px solid #334155;
-  }
-  .card h2 {
-    font-size: 1rem;
-    color: #94a3b8;
-    margin-bottom: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-size: 0.78rem;
-  }
-  /* Taxi list */
-  .taxi-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 0;
-    border-bottom: 1px solid #334155;
-  }
+  h1 { text-align: center; font-size: 1.6rem; margin-bottom: 4px; color: #facc15; }
+  .subtitle { text-align: center; color: #94a3b8; font-size: 0.85rem; margin-bottom: 24px; }
+  .card { background: #1e293b; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid #334155; }
+  .card h2 { color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.78rem; margin-bottom: 14px; }
+  .taxi-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #334155; }
   .taxi-item:last-child { border-bottom: none; }
-  .dot {
-    width: 12px; height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
   .dot.disponible { background: #22c55e; box-shadow: 0 0 8px #22c55e88; }
   .dot.ocupado    { background: #ef4444; box-shadow: 0 0 8px #ef444488; }
   .taxi-name { font-weight: 600; font-size: 0.95rem; }
-  .taxi-status {
-    margin-left: auto;
-    font-size: 0.78rem;
-    padding: 3px 10px;
-    border-radius: 20px;
-    font-weight: 600;
-  }
+  .taxi-status { margin-left: auto; font-size: 0.78rem; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
   .taxi-status.disponible { background: #14532d; color: #86efac; }
   .taxi-status.ocupado    { background: #450a0a; color: #fca5a5; }
-  .no-taxis {
-    text-align: center;
-    color: #475569;
-    padding: 20px 0;
-    font-size: 0.9rem;
-  }
-  /* Form */
-  label {
-    display: block;
-    font-size: 0.8rem;
-    color: #94a3b8;
-    margin-bottom: 6px;
-    margin-top: 14px;
-  }
+  .no-taxis { text-align: center; color: #475569; padding: 20px 0; font-size: 0.9rem; }
+  label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; margin-top: 14px; }
   label:first-of-type { margin-top: 0; }
-  input {
-    width: 100%;
-    padding: 12px 14px;
-    background: #0f172a;
-    border: 1px solid #334155;
-    border-radius: 10px;
-    color: #f1f5f9;
-    font-size: 0.95rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
+  input { width: 100%; padding: 12px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #f1f5f9; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
   input:focus { border-color: #facc15; }
-  .btn-ubicacion {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: #1e293b;
-    border: 1px solid #334155;
-    border-radius: 10px;
-    color: #94a3b8;
-    padding: 10px 14px;
-    width: 100%;
-    cursor: pointer;
-    margin-top: 14px;
-    font-size: 0.88rem;
-    transition: border-color 0.2s, color 0.2s;
-  }
-  .btn-ubicacion.activo {
-    border-color: #22c55e;
-    color: #22c55e;
-  }
-  .btn-pedir {
-    width: 100%;
-    padding: 15px;
-    background: #facc15;
-    color: #0f172a;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.05rem;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 18px;
-    transition: background 0.2s, transform 0.1s;
-  }
+  .btn-ubicacion { display: flex; align-items: center; gap: 8px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; color: #94a3b8; padding: 10px 14px; width: 100%; cursor: pointer; margin-top: 14px; font-size: 0.88rem; transition: border-color 0.2s, color 0.2s; }
+  .btn-ubicacion.activo { border-color: #22c55e; color: #22c55e; }
+  .btn-pedir { width: 100%; padding: 15px; background: #facc15; color: #0f172a; border: none; border-radius: 12px; font-size: 1.05rem; font-weight: 700; cursor: pointer; margin-top: 18px; transition: background 0.2s, transform 0.1s; }
   .btn-pedir:hover { background: #fde047; }
   .btn-pedir:active { transform: scale(0.98); }
   .btn-pedir:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
-  /* Status */
-  #estado {
-    display: none;
-    text-align: center;
-    padding: 20px;
-    border-radius: 16px;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 16px;
-  }
-  #estado.espera   { background: #1c1f14; color: #a3e635; border: 1px solid #4d7c0f; }
+  #estado { display: none; text-align: center; padding: 20px; border-radius: 16px; font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
+  #estado.espera   { background: #1c1f14; color: #a3e635; border: 1px solid #4d7c0f; display: block; }
   #estado.aceptada { background: #14532d; color: #86efac; border: 1px solid #15803d; display: block; }
   #estado.rechazada{ background: #450a0a; color: #fca5a5; border: 1px solid #991b1b; display: block; }
   #estado.sinTaxis { background: #1e1b4b; color: #a5b4fc; border: 1px solid #4338ca; display: block; }
-  .spinner {
-    display: inline-block;
-    width: 18px; height: 18px;
-    border: 3px solid #a3e63544;
-    border-top-color: #a3e635;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    vertical-align: middle;
-    margin-right: 8px;
-  }
+  .spinner { display: inline-block; width: 18px; height: 18px; border: 3px solid #a3e63544; border-top-color: #a3e635; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Historial ── */
+  .section { display: none; }
+  .section.activa { display: block; }
+  .contador-hist { text-align: center; font-size: 0.82rem; color: #64748b; margin-bottom: 14px; }
+  .carrera { background: #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 12px; border: 1px solid #334155; animation: entrada 0.3s ease; }
+  @keyframes entrada { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+  .carrera-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .carrera-num { font-size: 0.75rem; background: #facc15; color: #0f172a; padding: 2px 10px; border-radius: 20px; font-weight: 700; }
+  .carrera-fecha { font-size: 0.78rem; color: #64748b; }
+  .carrera-fila { display: flex; gap: 10px; margin-top: 6px; font-size: 0.88rem; }
+  .carrera-fila .icono { width: 20px; text-align: center; flex-shrink: 0; }
+  .vacio-hist { text-align: center; color: #475569; padding: 40px 20px; font-size: 0.9rem; }
+
+  /* ── Barra de navegación ── */
+  .nav-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #1e293b;
+    border-top: 1px solid #334155;
+    display: flex;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-size: 0.7rem;
+    gap: 4px;
+    transition: color 0.2s;
+  }
+  .nav-btn .nav-icon { font-size: 1.4rem; }
+  .nav-btn.activo { color: #facc15; }
+  .nav-badge {
+    position: absolute;
+    top: 6px;
+    right: calc(25% - 18px);
+    background: #ef4444;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    display: none;
+  }
 </style>
 </head>
 <body>
 
-<h1>🚕 Pedir Taxi</h1>
-<p class="subtitle">Servicio de transporte local</p>
-
-<!-- Estado de solicitud -->
-<div id="estado"></div>
-
-<!-- Taxis disponibles -->
-<div class="card">
-  <h2>🟢 Taxis activos</h2>
-  <div id="lista-taxis">
-    <p class="no-taxis">Buscando taxis...</p>
+<!-- ── SECCIÓN INICIO ── -->
+<div class="section activa" id="sec-inicio">
+  <h1>🚕 Pedir Taxi</h1>
+  <p class="subtitle">Servicio de transporte local</p>
+  <div id="estado"></div>
+  <div class="card">
+    <h2>Taxis activos</h2>
+    <div id="lista-taxis"><p class="no-taxis">Buscando taxis...</p></div>
+  </div>
+  <div class="card" id="formulario">
+    <h2>Tu información</h2>
+    <label>Tu nombre</label>
+    <input type="text" id="nombre" placeholder="Ej: María García">
+    <label>Teléfono (opcional)</label>
+    <input type="tel" id="telefono" placeholder="Ej: 099 123 4567">
+    <button class="btn-ubicacion" id="btn-ubic" onclick="obtenerUbicacion()">📍 Compartir mi ubicación</button>
+    <button class="btn-pedir" id="btn-pedir" onclick="pedirTaxi()">Solicitar Taxi</button>
   </div>
 </div>
 
-<!-- Formulario de solicitud -->
-<div class="card" id="formulario">
-  <h2>✏️ Tu información</h2>
-  <label>Tu nombre</label>
-  <input type="text" id="nombre" placeholder="Ej: María García">
-  <label>Teléfono (opcional)</label>
-  <input type="tel" id="telefono" placeholder="Ej: 099 123 4567">
-  <button class="btn-ubicacion" id="btn-ubic" onclick="obtenerUbicacion()">
-    📍 Compartir mi ubicación
-  </button>
-  <button class="btn-pedir" id="btn-pedir" onclick="pedirTaxi()">
-    Solicitar Taxi
-  </button>
+<!-- ── SECCIÓN HISTORIAL ── -->
+<div class="section" id="sec-historial">
+  <h1>Historial</h1>
+  <p class="subtitle">Carreras completadas</p>
+  <div class="contador-hist" id="contador-hist">Cargando...</div>
+  <div id="lista-hist"></div>
 </div>
+
+<!-- ── BARRA DE NAVEGACIÓN ── -->
+<nav class="nav-bar">
+  <button class="nav-btn activo" id="nav-inicio" onclick="cambiarTab('inicio')">
+    <span class="nav-icon">🏠</span>
+    Inicio
+  </button>
+  <button class="nav-btn" id="nav-historial" onclick="cambiarTab('historial')" style="position:relative">
+    <span class="nav-icon">📋</span>
+    Historial
+    <span class="nav-badge" id="badge-hist"></span>
+  </button>
+</nav>
 
 <script>
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
   const socket = io();
-  let miLat = null, miLng = null;
-  let solicitando = false;
+  let miLat = null, miLng = null, solicitando = false;
+  let historialData = [], histAnterior = 0;
 
+  // ── Tabs ──
+  function cambiarTab(tab) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('activa'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('activo'));
+    document.getElementById('sec-' + tab).classList.add('activa');
+    document.getElementById('nav-' + tab).classList.add('activo');
+    if (tab === 'historial') {
+      document.getElementById('badge-hist').style.display = 'none';
+      histAnterior = historialData.length;
+    }
+    window.scrollTo(0, 0);
+  }
+
+  // ── Taxis ──
   socket.on('taxis:actualizar', (lista) => {
     const div = document.getElementById('lista-taxis');
-    if (lista.length === 0) {
-      div.innerHTML = '<p class="no-taxis">No hay taxis registrados aún</p>';
-      return;
-    }
+    if (!lista.length) { div.innerHTML = '<p class="no-taxis">No hay taxis registrados aún</p>'; return; }
     div.innerHTML = lista.map(t => `
       <div class="taxi-item">
         <div class="dot ${t.disponible ? 'disponible' : 'ocupado'}"></div>
         <span class="taxi-name">${t.nombre}</span>
-        <span class="taxi-status ${t.disponible ? 'disponible' : 'ocupado'}">
-          ${t.disponible ? 'Disponible' : 'Ocupado'}
-        </span>
-      </div>
-    `).join('');
+        <span class="taxi-status ${t.disponible ? 'disponible' : 'ocupado'}">${t.disponible ? 'Disponible' : 'Ocupado'}</span>
+      </div>`).join('');
   });
 
+  // ── Solicitud ──
   socket.on('solicitud:enviada', ({ taxiNombre }) => {
     mostrarEstado('espera', `<span class="spinner"></span> Esperando respuesta de ${taxiNombre}...`);
     document.getElementById('formulario').style.opacity = '0.4';
     document.getElementById('btn-pedir').disabled = true;
   });
-
   socket.on('solicitud:aceptada', ({ choferNombre, choferNumero }) => {
     const tel = choferNumero ? `<br><small>📞 ${choferNumero}</small>` : '';
     mostrarEstado('aceptada', `✅ ¡${choferNombre} aceptó tu solicitud! Ya va en camino.${tel}`);
@@ -229,37 +193,17 @@
     solicitando = false;
     sonarConfirmacion();
   });
-
-  function sonarConfirmacion() {
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      [440, 550, 660].forEach((freq, i) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.18);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.2);
-        osc.start(ctx.currentTime + i * 0.18);
-        osc.stop(ctx.currentTime + i * 0.18 + 0.2);
-      });
-    } catch(e) {}
-  }
-
   socket.on('solicitud:rechazada', () => {
     mostrarEstado('rechazada', '❌ El chofer no pudo aceptar. Intenta de nuevo.');
     document.getElementById('formulario').style.opacity = '1';
     document.getElementById('btn-pedir').disabled = false;
     solicitando = false;
   });
-
   socket.on('solicitud:sinTaxis', () => {
     mostrarEstado('sinTaxis', '😔 No hay taxis disponibles en este momento.');
     document.getElementById('btn-pedir').disabled = false;
     solicitando = false;
   });
-
   socket.on('carrera:completada', () => {
     mostrarEstado('espera', 'Tu carrera ha terminado. Puedes pedir otro taxi cuando quieras.');
     setTimeout(() => {
@@ -272,42 +216,74 @@
     }, 3000);
   });
 
-  function mostrarEstado(tipo, texto) {
-    const el = document.getElementById('estado');
-    el.className = tipo;
-    el.innerHTML = texto;
-    el.style.display = 'block';
-  }
+  // ── Historial ──
+  fetch('/api/historial').then(r => r.json()).then(renderHistorial);
+  socket.on('historial:actualizar', (data) => {
+    renderHistorial(data);
+    const tabActiva = document.querySelector('.section.activa')?.id;
+    if (tabActiva !== 'sec-historial' && data.length > histAnterior) {
+      const badge = document.getElementById('badge-hist');
+      badge.textContent = data.length - histAnterior;
+      badge.style.display = 'block';
+    }
+  });
 
-  function obtenerUbicacion() {
-    if (!navigator.geolocation) {
-      alert('Tu navegador no soporta geolocalización.');
+  function renderHistorial(data) {
+    historialData = data;
+    const lista = document.getElementById('lista-hist');
+    const contador = document.getElementById('contador-hist');
+    if (!data.length) {
+      lista.innerHTML = '<div class="vacio-hist">Todavía no hay carreras completadas.</div>';
+      contador.textContent = 'Sin registros aún';
       return;
     }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        miLat = pos.coords.latitude;
-        miLng = pos.coords.longitude;
-        const btn = document.getElementById('btn-ubic');
-        btn.textContent = '✅ Ubicación compartida';
-        btn.classList.add('activo');
-      },
-      () => alert('No se pudo obtener tu ubicación.')
-    );
+    contador.textContent = `Total: ${data.length} carrera${data.length !== 1 ? 's' : ''}`;
+    lista.innerHTML = data.map((c, i) => `
+      <div class="carrera">
+        <div class="carrera-header">
+          <span class="carrera-num">#${data.length - i}</span>
+          <span class="carrera-fecha">${c.fecha}</span>
+        </div>
+        <div class="carrera-fila"><span class="icono">🚖</span><span>${c.chofer}</span></div>
+        <div class="carrera-fila"><span class="icono">👤</span><span>${c.cliente}</span></div>
+        <div class="carrera-fila"><span class="icono">📞</span><span>${c.telefono || '-'}</span></div>
+      </div>`).join('');
   }
 
+  // ── Helpers ──
+  function mostrarEstado(tipo, texto) {
+    const el = document.getElementById('estado');
+    el.className = tipo; el.innerHTML = texto; el.style.display = 'block';
+  }
+  function obtenerUbicacion() {
+    if (!navigator.geolocation) { alert('Tu navegador no soporta geolocalización.'); return; }
+    navigator.geolocation.getCurrentPosition(pos => {
+      miLat = pos.coords.latitude; miLng = pos.coords.longitude;
+      const btn = document.getElementById('btn-ubic');
+      btn.textContent = '✅ Ubicación compartida'; btn.classList.add('activo');
+    }, () => alert('No se pudo obtener tu ubicación.'));
+  }
   function pedirTaxi() {
     if (solicitando) return;
     const nombre = document.getElementById('nombre').value.trim();
     const telefono = document.getElementById('telefono').value.trim();
-    if (!nombre) {
-      alert('Por favor ingresa tu nombre.');
-      document.getElementById('nombre').focus();
-      return;
-    }
+    if (!nombre) { alert('Por favor ingresa tu nombre.'); document.getElementById('nombre').focus(); return; }
     solicitando = true;
     document.getElementById('btn-pedir').disabled = true;
     socket.emit('cliente:solicitar', { nombre, telefono, lat: miLat, lng: miLng });
+  }
+  function sonarConfirmacion() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      [440, 550, 660].forEach((freq, i) => {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.18);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.2);
+        osc.start(ctx.currentTime + i * 0.18); osc.stop(ctx.currentTime + i * 0.18 + 0.2);
+      });
+    } catch(e) {}
   }
 </script>
 </body>
