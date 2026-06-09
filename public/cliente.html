@@ -498,7 +498,7 @@
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
       const src = ctx.createMediaElementSource(audioEl);
       const gain = ctx.createGain();
-      gain.gain.value = 6;
+      gain.gain.value = 15;
       src.connect(gain);
       gain.connect(ctx.destination);
     } catch(e) {}
