@@ -38,22 +38,24 @@
   .slider:before { content: ''; position: absolute; width: 20px; height: 20px; background: white; border-radius: 50%; top: 4px; left: 4px; transition: transform 0.3s; }
   input:checked + .slider { background: #22c55e; }
   input:checked + .slider:before { transform: translateX(24px); }
-  #solicitud-card { display: none; animation: slideIn 0.35s ease; }
-  @keyframes slideIn { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
-  #solicitud-card.activa { display: block; background: #1c1917; border-color: #f59e0b; }
-  .solicitud-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 1rem; font-weight: 700; color: #fbbf24; }
-  .ping { width: 14px; height: 14px; background: #f59e0b; border-radius: 50%; animation: ping 1s ease infinite; flex-shrink: 0; }
-  @keyframes ping { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.4); opacity:0.5; } }
-  .info-row { display: flex; gap: 10px; margin-bottom: 8px; font-size: 0.9rem; }
-  .info-row .icon { width: 22px; text-align: center; flex-shrink: 0; }
-  .info-row .valor { color: #e2e8f0; }
-  .btns-solicitud { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-  .btn-aceptar { padding: 13px; background: #22c55e; color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; }
-  .btn-aceptar:hover { background: #16a34a; }
-  .btn-rechazar { padding: 13px; background: #334155; color: #f1f5f9; border: none; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; }
-  .btn-rechazar:hover { background: #475569; }
+  /* Overlay solicitud pantalla completa */
+  .solicitud-overlay { display: none; position: fixed; inset: 0; background: #1c1400ee; z-index: 500; justify-content: center; align-items: center; padding: 24px; backdrop-filter: blur(4px); }
+  .solicitud-overlay.activa { display: flex; }
+  .solicitud-box { background: #1c1917; border: 2px solid #f59e0b; border-radius: 24px; padding: 28px 22px; max-width: 380px; width: 100%; animation: solIn 0.3s ease; }
+  @keyframes solIn { from { transform:scale(0.85); opacity:0; } to { transform:scale(1); opacity:1; } }
+  .solicitud-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; font-size: 1.15rem; font-weight: 800; color: #fbbf24; }
+  .ping { width: 16px; height: 16px; background: #f59e0b; border-radius: 50%; animation: ping 1s ease infinite; flex-shrink: 0; }
+  @keyframes ping { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.5); opacity:0.5; } }
+  .info-row { display: flex; gap: 10px; margin-bottom: 10px; font-size: 0.95rem; }
+  .info-row .icon { width: 24px; text-align: center; flex-shrink: 0; }
+  .info-row .valor { color: #e2e8f0; font-weight: 500; }
+  .btns-solicitud { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+  .btn-aceptar { padding: 16px; background: #22c55e; color: white; border: none; border-radius: 14px; font-size: 1.1rem; font-weight: 800; cursor: pointer; }
+  .btn-aceptar:active { background: #16a34a; }
+  .btn-rechazar { padding: 16px; background: #334155; color: #f1f5f9; border: none; border-radius: 14px; font-size: 1.05rem; font-weight: 600; cursor: pointer; }
+  .btn-rechazar:active { background: #475569; }
   .btn-maps { width: 100%; padding: 13px; background: #1d4ed8; color: white; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 10px; }
-  .btn-completar { width: 100%; padding: 13px; background: #7c3aed; color: white; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 10px; display: none; }
+  .btn-completar { width: 100%; padding: 15px; background: #7c3aed; color: white; border: none; border-radius: 14px; font-size: 1rem; font-weight: 700; cursor: pointer; margin-top: 10px; display: none; }
   .btn-ubic { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid #334155; border-radius: 10px; color: #94a3b8; padding: 10px 14px; width: 100%; cursor: pointer; margin-top: 12px; font-size: 0.88rem; }
   .btn-ubic.activo { border-color: #22c55e; color: #22c55e; }
   .btn-turno { width: 100%; padding: 13px; background: transparent; color: #f87171; border: 2px solid #7f1d1d; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 12px; transition: background 0.2s; }
@@ -152,18 +154,22 @@
       <button class="btn-turno" onclick="terminarTurno()">🔴 Terminar turno</button>
     </div>
 
-    <div class="card" id="solicitud-card">
-      <div class="solicitud-header"><div class="ping"></div>Nueva solicitud de carrera</div>
-      <div class="info-row"><span class="icon">👤</span><span class="valor" id="sol-nombre">—</span></div>
-      <div class="info-row"><span class="icon">📞</span><span class="valor" id="sol-telefono">—</span></div>
-      <div class="info-row"><span class="icon">📍</span><span class="valor" id="sol-ubicacion">—</span></div>
-      <div class="btns-solicitud" id="btns-responder">
-        <button class="btn-aceptar" onclick="aceptar()">✅ Aceptar</button>
-        <button class="btn-rechazar" onclick="rechazar()">❌ Rechazar</button>
-      </div>
-      <button class="btn-maps" id="btn-maps" onclick="abrirMaps()" style="display:none">🗺️ Abrir ruta en Google Maps</button>
-      <button class="btn-completar" id="btn-completar" onclick="completarCarrera()">🏁 Marcar carrera completada</button>
+  </div>
+</div>
+
+<!-- ── OVERLAY SOLICITUD ── -->
+<div class="solicitud-overlay" id="solicitud-overlay">
+  <div class="solicitud-box">
+    <div class="solicitud-header"><div class="ping"></div>¡Nueva solicitud de carrera!</div>
+    <div class="info-row"><span class="icon">👤</span><span class="valor" id="sol-nombre">—</span></div>
+    <div class="info-row"><span class="icon">📞</span><span class="valor" id="sol-telefono">—</span></div>
+    <div class="info-row"><span class="icon">📍</span><span class="valor" id="sol-ubicacion">—</span></div>
+    <div class="btns-solicitud" id="btns-responder">
+      <button class="btn-aceptar" onclick="aceptar()">✅ Aceptar</button>
+      <button class="btn-rechazar" onclick="rechazar()">❌ Rechazar</button>
     </div>
+    <button class="btn-maps" id="btn-maps" onclick="abrirMaps()" style="display:none">🗺️ Abrir ruta en Google Maps</button>
+    <button class="btn-completar" id="btn-completar" onclick="completarCarrera()">🏁 Marcar carrera completada</button>
   </div>
 </div>
 
@@ -350,12 +356,9 @@
     document.getElementById('btns-responder').style.display = 'grid';
     document.getElementById('btn-maps').style.display = 'none';
     document.getElementById('btn-completar').style.display = 'none';
-    document.getElementById('solicitud-card').classList.add('activa');
+    document.getElementById('solicitud-overlay').classList.add('activa');
     if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
     sonarAlerta();
-    toast('Nueva solicitud de carrera!');
-    // Ir al panel automáticamente si estaba en historial
-    cambiarTab('panel');
   });
 
   function aceptar() {
@@ -368,13 +371,14 @@
     if (solicitudActual.lat) document.getElementById('btn-maps').style.display = 'block';
     document.getElementById('btn-completar').style.display = 'block';
     toast('Carrera aceptada');
+    // Mantener overlay abierto para mostrar mapa y completar
   }
 
   function rechazar() {
     if (!solicitudActual) return;
     socket.emit('chofer:rechazar', { clienteSocketId: solicitudActual.clienteSocketId });
     solicitudActual = null;
-    document.getElementById('solicitud-card').classList.remove('activa');
+    document.getElementById('solicitud-overlay').classList.remove('activa');
     toast('Solicitud rechazada');
   }
 
@@ -386,7 +390,7 @@
   function completarCarrera() {
     socket.emit('chofer:completar');
     solicitudActual = null;
-    document.getElementById('solicitud-card').classList.remove('activa');
+    document.getElementById('solicitud-overlay').classList.remove('activa');
     document.getElementById('toggle-disp').checked = true;
     document.getElementById('toggle-wrap').classList.add('activo');
     document.getElementById('estado-label').textContent = '🟢 Disponible';
