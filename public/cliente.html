@@ -23,16 +23,31 @@
   .subtitle { text-align: center; color: #94a3b8; font-size: 0.85rem; margin-bottom: 24px; }
   .card { background: #1e293b; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 1px solid #334155; }
   .card h2 { color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.78rem; margin-bottom: 14px; }
-  .taxi-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #334155; }
+  .taxis-resumen {
+    display: flex; gap: 10px; margin-bottom: 14px;
+  }
+  .resumen-chip {
+    flex: 1; text-align: center; padding: 8px 6px;
+    border-radius: 10px; font-size: 0.82rem; font-weight: 700; cursor: pointer;
+    border: 2px solid transparent; transition: border-color 0.2s;
+  }
+  .resumen-chip.verde { background: #14532d; color: #86efac; }
+  .resumen-chip.rojo  { background: #450a0a; color: #fca5a5; }
+  .resumen-chip.activo-filtro.verde { border-color: #22c55e; }
+  .resumen-chip.activo-filtro.rojo  { border-color: #ef4444; }
+  .resumen-chip.todos { background: #1e3a5f; color: #93c5fd; }
+  .resumen-chip.activo-filtro.todos { border-color: #3b82f6; }
+  .taxi-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #1e293b; }
   .taxi-item:last-child { border-bottom: none; }
-  .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .dot.disponible { background: #22c55e; box-shadow: 0 0 8px #22c55e88; }
-  .dot.ocupado    { background: #ef4444; box-shadow: 0 0 8px #ef444488; }
-  .taxi-name { font-weight: 600; font-size: 0.95rem; }
-  .taxi-status { margin-left: auto; font-size: 0.78rem; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot.disponible { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+  .dot.ocupado    { background: #ef4444; box-shadow: 0 0 6px #ef444488; }
+  .taxi-name { font-weight: 600; font-size: 0.88rem; flex: 1; }
+  .taxi-status { font-size: 0.72rem; padding: 2px 8px; border-radius: 20px; font-weight: 600; flex-shrink: 0; }
   .taxi-status.disponible { background: #14532d; color: #86efac; }
   .taxi-status.ocupado    { background: #450a0a; color: #fca5a5; }
   .no-taxis { text-align: center; color: #475569; padding: 20px 0; font-size: 0.9rem; }
+  .separador-grupo { font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 0 4px; }
   label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; margin-top: 14px; }
   label:first-of-type { margin-top: 0; }
   input { width: 100%; padding: 12px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #f1f5f9; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
@@ -167,6 +182,11 @@
   <div id="estado"></div>
   <div class="card">
     <h2>Taxis activos</h2>
+    <div class="taxis-resumen" id="taxis-resumen" style="display:none">
+      <div class="resumen-chip todos activo-filtro" onclick="filtrarTaxis('todos')">🚕 Todos</div>
+      <div class="resumen-chip verde" id="chip-disp" onclick="filtrarTaxis('disponible')">● 0 Disponibles</div>
+      <div class="resumen-chip rojo"  id="chip-ocup" onclick="filtrarTaxis('ocupado')">● 0 Ocupados</div>
+    </div>
     <div id="lista-taxis"><p class="no-taxis">Buscando taxis...</p></div>
   </div>
   <div class="card" id="formulario">
@@ -236,16 +256,62 @@
   }
 
   // ── Taxis ──
+  let taxisData = [], filtroActual = 'todos';
+
   socket.on('taxis:actualizar', (lista) => {
-    const div = document.getElementById('lista-taxis');
-    if (!lista.length) { div.innerHTML = '<p class="no-taxis">No hay taxis registrados aún</p>'; return; }
-    div.innerHTML = lista.map(t => `
-      <div class="taxi-item">
-        <div class="dot ${t.disponible ? 'disponible' : 'ocupado'}"></div>
-        <span class="taxi-name">${t.nombre}</span>
-        <span class="taxi-status ${t.disponible ? 'disponible' : 'ocupado'}">${t.disponible ? 'Disponible' : 'Ocupado'}</span>
-      </div>`).join('');
+    taxisData = lista;
+    renderTaxis();
   });
+
+  function filtrarTaxis(filtro) {
+    filtroActual = filtro;
+    document.querySelectorAll('.resumen-chip').forEach(c => c.classList.remove('activo-filtro'));
+    const mapa = { todos: 0, disponible: 1, ocupado: 2 };
+    document.querySelectorAll('.resumen-chip')[mapa[filtro]].classList.add('activo-filtro');
+    renderTaxis();
+  }
+
+  function renderTaxis() {
+    const div = document.getElementById('lista-taxis');
+    const resumen = document.getElementById('taxis-resumen');
+    if (!taxisData.length) {
+      div.innerHTML = '<p class="no-taxis">No hay taxis registrados aún</p>';
+      resumen.style.display = 'none'; return;
+    }
+    const disponibles = taxisData.filter(t => t.disponible);
+    const ocupados    = taxisData.filter(t => !t.disponible);
+    document.getElementById('chip-disp').innerHTML = `● ${disponibles.length} Disponible${disponibles.length !== 1 ? 's' : ''}`;
+    document.getElementById('chip-ocup').innerHTML = `● ${ocupados.length} Ocupado${ocupados.length !== 1 ? 's' : ''}`;
+    resumen.style.display = 'flex';
+
+    let mostrar = filtroActual === 'disponible' ? disponibles
+                : filtroActual === 'ocupado'    ? ocupados
+                : [...disponibles, ...ocupados];
+
+    if (!mostrar.length) {
+      div.innerHTML = `<p class="no-taxis">No hay taxis ${filtroActual === 'disponible' ? 'disponibles' : 'ocupados'} ahora</p>`;
+      return;
+    }
+
+    let html = '';
+    if (filtroActual === 'todos') {
+      if (disponibles.length) html += `<div class="separador-grupo">● Disponibles (${disponibles.length})</div>`;
+      html += disponibles.map(t => tarjetaTaxi(t)).join('');
+      if (ocupados.length) html += `<div class="separador-grupo">● Ocupados (${ocupados.length})</div>`;
+      html += ocupados.map(t => tarjetaTaxi(t)).join('');
+    } else {
+      html = mostrar.map(t => tarjetaTaxi(t)).join('');
+    }
+    div.innerHTML = html;
+  }
+
+  function tarjetaTaxi(t) {
+    return `<div class="taxi-item">
+      <div class="dot ${t.disponible ? 'disponible' : 'ocupado'}"></div>
+      <span class="taxi-name">${t.nombre}</span>
+      <span class="taxi-status ${t.disponible ? 'disponible' : 'ocupado'}">${t.disponible ? 'Disponible' : 'Ocupado'}</span>
+    </div>`;
+  }
 
   // ── Solicitud ──
   socket.on('solicitud:enviada', ({ taxiNombre }) => {
