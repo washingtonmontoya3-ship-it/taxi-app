@@ -492,17 +492,22 @@
     } catch(e) {}
   }
 
+  function reproducirVoz(audio) {
+    fetch(audio).then(r => r.blob()).then(blob => {
+      const url = URL.createObjectURL(blob);
+      const audioEl = new Audio(url);
+      audioEl.volume = 1.0;
+      audioEl.play().catch(() => {});
+      audioEl.onended = () => URL.revokeObjectURL(url);
+    }).catch(() => {
+      const audioEl = new Audio(audio);
+      audioEl.volume = 1.0;
+      audioEl.play().catch(() => {});
+    });
+  }
+
   socket.on('voz:recibida', ({ audio }) => {
-    const audioEl = new Audio(audio);
-    try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const src = ctx.createMediaElementSource(audioEl);
-      const gain = ctx.createGain();
-      gain.gain.value = 15;
-      src.connect(gain);
-      gain.connect(ctx.destination);
-    } catch(e) {}
-    audioEl.play().catch(() => {});
+    reproducirVoz(audio);
     const estadoEl = document.getElementById('estado');
     if (!estadoEl.innerHTML.includes('mensaje de voz')) {
       estadoEl.innerHTML += '<br><small>🎤 El chofer te envió un mensaje de voz</small>';
@@ -514,12 +519,19 @@
   async function iniciarGrabacionCliente() {
     if (mediaRecorderCli && mediaRecorderCli.state === 'recording') return;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
-      mediaRecorderCli = new MediaRecorder(stream, { mimeType });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false } });
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ctx.createMediaStreamSource(stream);
+      const gain = ctx.createGain();
+      gain.gain.value = 4;
+      const dest = ctx.createMediaStreamDestination();
+      src.connect(gain); gain.connect(dest);
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus'
+                     : MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+      mediaRecorderCli = new MediaRecorder(dest.stream, { mimeType });
       audioChunksCli = [];
       mediaRecorderCli.ondataavailable = e => { if (e.data.size > 0) audioChunksCli.push(e.data); };
-      mediaRecorderCli.start();
+      mediaRecorderCli.start(100);
       const btn = document.getElementById('btn-voz-cli');
       btn.classList.add('grabando');
       document.getElementById('voz-label-cli').textContent = '🔴 Grabando... suelta para enviar';
@@ -533,10 +545,11 @@
     mediaRecorderCli.stop();
     mediaRecorderCli.stream.getTracks().forEach(t => t.stop());
     mediaRecorderCli.onstop = () => {
-      const blob = new Blob(audioChunksCli, { type: mediaRecorderCli.mimeType });
+      const mimeType = mediaRecorderCli.mimeType.split(';')[0];
+      const blob = new Blob(audioChunksCli, { type: mimeType });
       const reader = new FileReader();
       reader.onloadend = () => {
-        socket.emit('voz:cliente_enviar', { audio: reader.result, mimeType: mediaRecorderCli.mimeType });
+        socket.emit('voz:cliente_enviar', { audio: reader.result });
         document.getElementById('voz-estado-cli').textContent = 'Mensaje enviado';
         setTimeout(() => { document.getElementById('voz-estado-cli').textContent = ''; }, 2500);
       };
