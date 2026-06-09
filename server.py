@@ -164,6 +164,22 @@ def chofer_completar():
         socketio.emit('historial:actualizar', historial)
 
 
+@socketio.on('emergencia:activar')
+def emergencia_activar(data):
+    sid = request.sid
+    nombre = data.get('nombre', 'Alguien')
+    tipo = data.get('tipo', 'usuario')
+    lat = data.get('lat')
+    lng = data.get('lng')
+    print(f'[EMERGENCIA] {nombre} ({tipo}) activo boton de auxilio')
+    socketio.emit('emergencia:alerta', {
+        'nombre': nombre,
+        'tipo': tipo,
+        'lat': lat,
+        'lng': lng,
+    })
+
+
 @socketio.on('historial:limpiar')
 def historial_limpiar():
     historial.clear()

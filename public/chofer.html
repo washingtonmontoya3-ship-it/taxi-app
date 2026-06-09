@@ -57,6 +57,21 @@
   .btn-ubic { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid #334155; border-radius: 10px; color: #94a3b8; padding: 10px 14px; width: 100%; cursor: pointer; margin-top: 12px; font-size: 0.88rem; }
   .btn-ubic.activo { border-color: #22c55e; color: #22c55e; }
 
+  /* Emergencia */
+  .btn-auxilio { position: fixed; bottom: 80px; right: 16px; width: 64px; height: 64px; background: #dc2626; color: white; border: none; border-radius: 50%; font-size: 1.6rem; cursor: pointer; box-shadow: 0 0 0 4px #450a0a, 0 4px 20px #dc262688; z-index: 150; animation: pulsoRojo 2s ease infinite; transition: transform 0.1s; }
+  .btn-auxilio:active { transform: scale(0.92); }
+  @keyframes pulsoRojo { 0%,100% { box-shadow: 0 0 0 4px #450a0a, 0 4px 20px #dc262688; } 50% { box-shadow: 0 0 0 8px #450a0a, 0 4px 30px #dc2626cc; } }
+  .emergencia-overlay { display: none; position: fixed; inset: 0; background: #7f1d1ddd; z-index: 999; justify-content: center; align-items: center; padding: 30px; backdrop-filter: blur(4px); }
+  .emergencia-overlay.activa { display: flex; }
+  .emergencia-box { background: #1c0a0a; border: 2px solid #dc2626; border-radius: 20px; padding: 30px 24px; text-align: center; max-width: 340px; width: 100%; animation: shakeIn 0.4s ease; }
+  @keyframes shakeIn { 0% { transform:scale(0.8); opacity:0; } 60% { transform:scale(1.05); } 100% { transform:scale(1); opacity:1; } }
+  .emergencia-icono { font-size: 3rem; margin-bottom: 12px; }
+  .emergencia-titulo { font-size: 1.4rem; font-weight: 800; color: #ef4444; margin-bottom: 8px; }
+  .emergencia-quien { font-size: 1rem; color: #fca5a5; margin-bottom: 6px; }
+  .emergencia-tipo { font-size: 0.82rem; color: #94a3b8; margin-bottom: 20px; }
+  .emergencia-mapa { display: inline-block; margin-bottom: 16px; padding: 10px 20px; background: #dc2626; color: white; border-radius: 10px; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+  .emergencia-cerrar { width: 100%; padding: 12px; background: #334155; color: #f1f5f9; border: none; border-radius: 12px; font-size: 0.9rem; cursor: pointer; }
+
   /* Historial */
   .section { display: none; }
   .section.activa { display: block; }
@@ -140,6 +155,21 @@
   <p class="subtitle">Carreras completadas</p>
   <div class="contador-hist" id="contador-hist">Cargando...</div>
   <div id="lista-hist"></div>
+</div>
+
+<!-- ── BOTÓN AUXILIO ── -->
+<button class="btn-auxilio" onclick="activarAuxilio()" title="Botón de emergencia">🆘</button>
+
+<!-- ── ALERTA DE EMERGENCIA ── -->
+<div class="emergencia-overlay" id="emergencia-overlay">
+  <div class="emergencia-box">
+    <div class="emergencia-icono">🚨</div>
+    <div class="emergencia-titulo">¡EMERGENCIA!</div>
+    <div class="emergencia-quien" id="em-quien">Alguien necesita ayuda</div>
+    <div class="emergencia-tipo" id="em-tipo"></div>
+    <a class="emergencia-mapa" id="em-mapa" style="display:none" target="_blank">📍 Ver ubicación en Maps</a>
+    <button class="emergencia-cerrar" onclick="cerrarEmergencia()">Entendido — Cerrar alerta</button>
+  </div>
 </div>
 
 <!-- ── BARRA DE NAVEGACIÓN ── -->
@@ -303,6 +333,44 @@
         <div class="carrera-fila"><span class="icono">👤</span><span>${c.cliente}</span></div>
         <div class="carrera-fila"><span class="icono">📞</span><span>${c.telefono || '-'}</span></div>
       </div>`).join('');
+  }
+
+  // ── Emergencia ──
+  function activarAuxilio() {
+    const nombre = document.getElementById('perfil-nombre')?.textContent || document.getElementById('reg-nombre').value.trim() || 'Chofer';
+    if (!confirm(`¿Confirmas que necesitas ayuda de emergencia?\n\nSe avisará a todos los conectados.`)) return;
+    const lat = watchId ? null : null; // usa última posición conocida si hay
+    socket.emit('emergencia:activar', { nombre, tipo: 'Chofer', lat: null, lng: null });
+  }
+
+  socket.on('emergencia:alerta', (data) => {
+    document.getElementById('em-quien').textContent = `${data.nombre} necesita ayuda urgente`;
+    document.getElementById('em-tipo').textContent = `Activado por: ${data.tipo}`;
+    const mapa = document.getElementById('em-mapa');
+    if (data.lat) { mapa.href = `https://www.google.com/maps?q=${data.lat},${data.lng}`; mapa.style.display = 'inline-block'; }
+    else { mapa.style.display = 'none'; }
+    document.getElementById('emergencia-overlay').classList.add('activa');
+    sonarEmergencia();
+    if (navigator.vibrate) navigator.vibrate([500,200,500,200,500]);
+    cambiarTab('panel');
+  });
+
+  function cerrarEmergencia() {
+    document.getElementById('emergencia-overlay').classList.remove('activa');
+  }
+
+  function sonarEmergencia() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      for (let i = 0; i < 6; i++) {
+        const osc = ctx.createOscillator(), gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.frequency.value = i % 2 === 0 ? 960 : 720;
+        gain.gain.setValueAtTime(0.6, ctx.currentTime + i * 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.3 + 0.28);
+        osc.start(ctx.currentTime + i * 0.3); osc.stop(ctx.currentTime + i * 0.3 + 0.28);
+      }
+    } catch(e) {}
   }
 
   function sonarAlerta() {
