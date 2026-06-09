@@ -8,6 +8,7 @@
   "theme_color": "#3b82f6",
   "orientation": "portrait",
   "icons": [
-    { "src": "/icon-chofer.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "/icon-chofer-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-chofer-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
