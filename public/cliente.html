@@ -494,6 +494,14 @@
 
   socket.on('voz:recibida', ({ audio }) => {
     const audioEl = new Audio(audio);
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = ctx.createMediaElementSource(audioEl);
+      const gain = ctx.createGain();
+      gain.gain.value = 6;
+      src.connect(gain);
+      gain.connect(ctx.destination);
+    } catch(e) {}
     audioEl.play().catch(() => {});
     const estadoEl = document.getElementById('estado');
     if (!estadoEl.innerHTML.includes('mensaje de voz')) {
