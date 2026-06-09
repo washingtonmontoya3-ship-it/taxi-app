@@ -56,6 +56,13 @@
   .btn-completar { width: 100%; padding: 13px; background: #7c3aed; color: white; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 10px; display: none; }
   .btn-ubic { display: flex; align-items: center; gap: 8px; background: transparent; border: 1px solid #334155; border-radius: 10px; color: #94a3b8; padding: 10px 14px; width: 100%; cursor: pointer; margin-top: 12px; font-size: 0.88rem; }
   .btn-ubic.activo { border-color: #22c55e; color: #22c55e; }
+  .btn-turno { width: 100%; padding: 13px; background: transparent; color: #f87171; border: 2px solid #7f1d1d; border-radius: 12px; font-size: 0.95rem; font-weight: 700; cursor: pointer; margin-top: 12px; transition: background 0.2s; }
+  .btn-turno:hover { background: #450a0a; }
+  .turno-terminado-msg { text-align: center; padding: 40px 20px; }
+  .turno-terminado-msg .icono { font-size: 3rem; margin-bottom: 16px; }
+  .turno-terminado-msg h2 { color: #60a5fa; margin-bottom: 8px; }
+  .turno-terminado-msg p { color: #94a3b8; font-size: 0.9rem; margin-bottom: 24px; }
+  .btn-nuevo-turno { padding: 13px 28px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; }
 
   /* Emergencia */
   .btn-auxilio { position: fixed; bottom: 80px; right: 16px; width: 64px; height: 64px; background: #dc2626; color: white; border: none; border-radius: 50%; font-size: 1.6rem; cursor: pointer; box-shadow: 0 0 0 4px #450a0a, 0 4px 20px #dc262688; z-index: 150; animation: pulsoRojo 2s ease infinite; transition: transform 0.1s; }
@@ -103,6 +110,16 @@
   <h1>🚖 Panel del Chofer</h1>
   <p class="subtitle">Gestiona tus carreras en tiempo real</p>
 
+  <!-- Pantalla turno terminado -->
+  <div class="card" id="turno-terminado-card" style="display:none">
+    <div class="turno-terminado-msg">
+      <div class="icono">🌙</div>
+      <h2>Turno terminado</h2>
+      <p>Ya no apareces en la lista de taxis disponibles. ¡Hasta mañana!</p>
+      <button class="btn-nuevo-turno" onclick="nuevoTurno()">Iniciar nuevo turno</button>
+    </div>
+  </div>
+
   <div class="card" id="registro-card">
     <h2>Registro</h2>
     <label>Tu nombre / nombre del taxi</label>
@@ -132,6 +149,7 @@
         </label>
       </div>
       <button class="btn-ubic" id="btn-ubic" onclick="compartirUbicacion()">📍 Compartir mi ubicación (opcional)</button>
+      <button class="btn-turno" onclick="terminarTurno()">🔴 Terminar turno</button>
     </div>
 
     <div class="card" id="solicitud-card">
@@ -227,6 +245,29 @@
     document.getElementById('perfil-numero').textContent = numero || 'Sin número registrado';
     toast('Conectado! Ya puedes recibir solicitudes.');
   });
+
+  function terminarTurno() {
+    if (!confirm('¿Seguro que quieres terminar tu turno?\n\nDesaparecerás de la lista de taxis disponibles.')) return;
+    socket.emit('chofer:terminar_turno');
+  }
+
+  socket.on('chofer:turno_terminado', () => {
+    if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('registro-card').style.display = 'none';
+    document.getElementById('turno-terminado-card').style.display = 'block';
+    toast('Turno terminado. Hasta luego.');
+  });
+
+  function nuevoTurno() {
+    document.getElementById('turno-terminado-card').style.display = 'none';
+    document.getElementById('registro-card').style.display = 'block';
+    document.getElementById('reg-nombre').disabled = false;
+    document.getElementById('reg-nombre').value = '';
+    document.getElementById('reg-numero').disabled = false;
+    document.getElementById('reg-numero').value = '';
+    document.querySelector('.btn-registrar').disabled = false;
+  }
 
   function cambiarDisponibilidad() {
     const disponible = document.getElementById('toggle-disp').checked;

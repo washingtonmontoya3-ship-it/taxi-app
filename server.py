@@ -182,6 +182,16 @@ def emergencia_activar(data):
     })
 
 
+@socketio.on('chofer:terminar_turno')
+def chofer_terminar_turno():
+    sid = request.sid
+    if sid in taxis:
+        print(f'[CHOFER] {taxis[sid]["nombre"]} termino turno')
+        del taxis[sid]
+        socketio.emit('taxis:actualizar', list(taxis.values()))
+    emit('chofer:turno_terminado')
+
+
 @socketio.on('historial:limpiar')
 def historial_limpiar():
     historial.clear()
