@@ -120,6 +120,9 @@ def chofer_aceptar(data):
         'choferNombre': taxis.get(sid, {}).get('nombre', ''),
         'choferNumero': taxis.get(sid, {}).get('numero', ''),
     }, to=cliente_sid)
+    # Guardar cliente_sid para notificarle al completar la carrera
+    if sid in solicitudes:
+        solicitudes[sid]['clienteSocketId'] = cliente_sid
     print(f'[SOLICITUD] Aceptada por {taxis.get(sid, {}).get("nombre", "")}')
 
 
@@ -140,8 +143,13 @@ def chofer_completar():
         socketio.emit('taxis:actualizar', list(taxis.values()))
         print(f'[CHOFER] {nombre_chofer} completo carrera')
 
-        # Guardar en historial
+        # Avisar al cliente que la carrera terminó
         sol = solicitudes.get(sid) or {}
+        cliente_sid = sol.get('clienteSocketId')
+        if cliente_sid:
+            socketio.emit('carrera:completada', to=cliente_sid)
+
+        # Guardar en historial
         ahora = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
         entrada = {
             'fecha': ahora,

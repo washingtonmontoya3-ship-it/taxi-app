@@ -254,6 +254,18 @@
     solicitando = false;
   });
 
+  socket.on('carrera:completada', () => {
+    mostrarEstado('espera', 'Tu carrera ha terminado. Puedes pedir otro taxi cuando quieras.');
+    setTimeout(() => {
+      document.getElementById('estado').style.display = 'none';
+      document.getElementById('formulario').style.opacity = '1';
+      document.getElementById('btn-pedir').disabled = false;
+      document.getElementById('nombre').value = '';
+      document.getElementById('telefono').value = '';
+      solicitando = false;
+    }, 3000);
+  });
+
   function mostrarEstado(tipo, texto) {
     const el = document.getElementById('estado');
     el.className = tipo;
