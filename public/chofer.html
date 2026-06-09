@@ -446,13 +446,13 @@
   function sonarAlerta() {
     try {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      [0, 0.3, 0.6].forEach(t => {
+      [0, 0.35, 0.7, 1.05, 1.4].forEach(t => {
         const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
-        osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.5, ctx.currentTime + t);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.25);
-        osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.25);
+        osc.frequency.value = 1050;
+        gain.gain.setValueAtTime(1.5, ctx.currentTime + t);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.32);
+        osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.32);
       });
     } catch(e) {}
   }
