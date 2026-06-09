@@ -48,6 +48,7 @@
   .taxi-status.ocupado    { background: #450a0a; color: #fca5a5; }
   .no-taxis { text-align: center; color: #475569; padding: 20px 0; font-size: 0.9rem; }
   .separador-grupo { font-size: 0.7rem; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 0 4px; }
+  .taxi-dist { font-size: 0.75rem; color: #facc15; font-weight: 700; margin-left: auto; margin-right: 8px; }
   label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 6px; margin-top: 14px; }
   label:first-of-type { margin-top: 0; }
   input { width: 100%; padding: 12px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #f1f5f9; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
@@ -284,6 +285,15 @@
     document.getElementById('chip-ocup').innerHTML = `● ${ocupados.length} Ocupado${ocupados.length !== 1 ? 's' : ''}`;
     resumen.style.display = 'flex';
 
+    // Ordenar disponibles por distancia si el cliente compartió ubicación
+    if (miLat && miLng) {
+      disponibles.sort((a, b) => {
+        const dA = (a.lat && a.lng) ? haversine(miLat, miLng, a.lat, a.lng) : Infinity;
+        const dB = (b.lat && b.lng) ? haversine(miLat, miLng, b.lat, b.lng) : Infinity;
+        return dA - dB;
+      });
+    }
+
     let mostrar = filtroActual === 'disponible' ? disponibles
                 : filtroActual === 'ocupado'    ? ocupados
                 : [...disponibles, ...ocupados];
@@ -306,11 +316,27 @@
   }
 
   function tarjetaTaxi(t) {
+    let distTexto = '';
+    if (miLat && miLng && t.lat && t.lng) {
+      const km = haversine(miLat, miLng, t.lat, t.lng);
+      distTexto = km < 1
+        ? `<span class="taxi-dist">${Math.round(km * 1000)} m</span>`
+        : `<span class="taxi-dist">${km.toFixed(1)} km</span>`;
+    }
     return `<div class="taxi-item">
       <div class="dot ${t.disponible ? 'disponible' : 'ocupado'}"></div>
       <span class="taxi-name">${t.nombre}</span>
+      ${distTexto}
       <span class="taxi-status ${t.disponible ? 'disponible' : 'ocupado'}">${t.disponible ? 'Disponible' : 'Ocupado'}</span>
     </div>`;
+  }
+
+  function haversine(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
   // ── Solicitud ──
@@ -395,6 +421,7 @@
       miLat = pos.coords.latitude; miLng = pos.coords.longitude;
       const btn = document.getElementById('btn-ubic');
       btn.textContent = '✅ Ubicación compartida'; btn.classList.add('activo');
+      renderTaxis(); // reordenar lista por distancia
     }, () => alert('No se pudo obtener tu ubicación.'));
   }
   function pedirTaxi() {
