@@ -243,6 +243,12 @@
   let miLat = null, miLng = null, solicitando = false;
   let historialData = [], histAnterior = 0;
 
+  // Cargar datos guardados al abrir la app
+  const nombreGuardado = localStorage.getItem('cliente_nombre');
+  const telefonoGuardado = localStorage.getItem('cliente_telefono');
+  if (nombreGuardado) document.getElementById('nombre').value = nombreGuardado;
+  if (telefonoGuardado) document.getElementById('telefono').value = telefonoGuardado;
+
   // ── Tabs ──
   function cambiarTab(tab) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('activa'));
@@ -370,8 +376,6 @@
       document.getElementById('estado').style.display = 'none';
       document.getElementById('formulario').style.opacity = '1';
       document.getElementById('btn-pedir').disabled = false;
-      document.getElementById('nombre').value = '';
-      document.getElementById('telefono').value = '';
       solicitando = false;
     }, 3000);
   });
@@ -429,6 +433,8 @@
     const nombre = document.getElementById('nombre').value.trim();
     const telefono = document.getElementById('telefono').value.trim();
     if (!nombre) { alert('Por favor ingresa tu nombre.'); document.getElementById('nombre').focus(); return; }
+    localStorage.setItem('cliente_nombre', nombre);
+    localStorage.setItem('cliente_telefono', telefono);
     solicitando = true;
     document.getElementById('btn-pedir').disabled = true;
     socket.emit('cliente:solicitar', { nombre, telefono, lat: miLat, lng: miLng });

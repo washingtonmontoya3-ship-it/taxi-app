@@ -252,11 +252,19 @@
     window.scrollTo(0, 0);
   }
 
+  // Cargar datos guardados al abrir la app
+  const nombreGuardado = localStorage.getItem('chofer_nombre');
+  const numeroGuardado = localStorage.getItem('chofer_numero');
+  if (nombreGuardado) document.getElementById('reg-nombre').value = nombreGuardado;
+  if (numeroGuardado) document.getElementById('reg-numero').value = numeroGuardado;
+
   // ── Registro ──
   function registrar() {
     const nombre = document.getElementById('reg-nombre').value.trim();
     const numero = document.getElementById('reg-numero').value.trim();
     if (!nombre) { alert('Por favor ingresa tu nombre.'); document.getElementById('reg-nombre').focus(); return; }
+    localStorage.setItem('chofer_nombre', nombre);
+    localStorage.setItem('chofer_numero', numero);
     socket.emit('chofer:registrar', { nombre, numero });
     document.getElementById('reg-nombre').disabled = true;
     document.getElementById('reg-numero').disabled = true;
