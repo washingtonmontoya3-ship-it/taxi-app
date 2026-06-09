@@ -307,7 +307,20 @@ def voz_enviar(data):
         'audio': data.get('audio'),
         'mimeType': data.get('mimeType'),
     }, to=cliente_sid)
-    print('[VOZ] Mensaje de voz enviado al cliente')
+    print('[VOZ] Chofer -> Cliente')
+
+
+@socketio.on('voz:cliente_enviar')
+def voz_cliente_enviar(data):
+    sid = request.sid
+    sol = solicitudes.get(sid, {})
+    chofer_sid = sol.get('choferSocketId')
+    if chofer_sid:
+        socketio.emit('voz:recibida', {
+            'audio': data.get('audio'),
+            'mimeType': data.get('mimeType'),
+        }, to=chofer_sid)
+        print('[VOZ] Cliente -> Chofer')
 
 
 @socketio.on('historial:limpiar')
@@ -341,6 +354,7 @@ def cliente_solicitar(data):
 
     solicitudes[sid] = {
         'clienteId': sid,
+        'choferSocketId': elegido['id'],
         'nombre': data.get('nombre'),
         'telefono': data.get('telefono'),
         'lat': lat,

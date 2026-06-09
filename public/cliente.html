@@ -59,6 +59,12 @@
   .btn-pedir:hover { background: #fde047; }
   .btn-pedir:active { transform: scale(0.98); }
   .btn-pedir:disabled { background: #334155; color: #64748b; cursor: not-allowed; }
+  /* Voz */
+  .voz-wrap { display: none; margin-bottom: 16px; }
+  .btn-voz { width: 100%; padding: 14px; background: #1e293b; border: 2px solid #334155; border-radius: 14px; color: #94a3b8; font-size: 0.95rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; user-select: none; -webkit-user-select: none; }
+  .btn-voz.grabando { background: #7f1d1d; border-color: #ef4444; color: #fca5a5; animation: pulsoVoz 0.8s ease infinite; }
+  @keyframes pulsoVoz { 0%,100% { opacity:1; } 50% { opacity:0.7; } }
+  .voz-estado { font-size: 0.78rem; color: #64748b; text-align: center; margin-top: 5px; }
   #estado { display: none; text-align: center; padding: 20px; border-radius: 16px; font-size: 1rem; font-weight: 600; margin-bottom: 16px; }
   #estado.espera   { background: #1c1f14; color: #a3e635; border: 1px solid #4d7c0f; display: block; }
   #estado.aceptada { background: #14532d; color: #86efac; border: 1px solid #15803d; display: block; }
@@ -189,6 +195,12 @@
       <div class="resumen-chip rojo"  id="chip-ocup" onclick="filtrarTaxis('ocupado')">● 0 Ocupados</div>
     </div>
     <div id="lista-taxis"><p class="no-taxis">Buscando taxis...</p></div>
+  </div>
+  <div class="voz-wrap" id="voz-wrap-cliente">
+    <button class="btn-voz" id="btn-voz-cli" ontouchstart="iniciarGrabacionCliente()" ontouchend="enviarVozCliente()" onmousedown="iniciarGrabacionCliente()" onmouseup="enviarVozCliente()">
+      🎤 <span id="voz-label-cli">Mantén para hablarle al chofer</span>
+    </button>
+    <div class="voz-estado" id="voz-estado-cli"></div>
   </div>
   <div class="card" id="formulario">
     <h2>Tu información</h2>
@@ -356,6 +368,7 @@
     mostrarEstado('aceptada', `✅ ¡${choferNombre} aceptó tu solicitud! Ya va en camino.${tel}`);
     document.getElementById('formulario').style.opacity = '1';
     document.getElementById('btn-pedir').disabled = false;
+    document.getElementById('voz-wrap-cliente').style.display = 'block';
     solicitando = false;
     sonarConfirmacion();
   });
@@ -372,6 +385,7 @@
   });
   socket.on('carrera:completada', () => {
     mostrarEstado('espera', 'Tu carrera ha terminado. Puedes pedir otro taxi cuando quieras.');
+    document.getElementById('voz-wrap-cliente').style.display = 'none';
     setTimeout(() => {
       document.getElementById('estado').style.display = 'none';
       document.getElementById('formulario').style.opacity = '1';
@@ -481,8 +495,49 @@
   socket.on('voz:recibida', ({ audio }) => {
     const audioEl = new Audio(audio);
     audioEl.play().catch(() => {});
-    mostrarEstado('aceptada', document.getElementById('estado').innerHTML + '<br><small>🎤 El chofer te envió un mensaje de voz</small>');
+    const estadoEl = document.getElementById('estado');
+    if (!estadoEl.innerHTML.includes('mensaje de voz')) {
+      estadoEl.innerHTML += '<br><small>🎤 El chofer te envió un mensaje de voz</small>';
+    }
   });
+
+  let mediaRecorderCli = null, audioChunksCli = [];
+
+  async function iniciarGrabacionCliente() {
+    if (mediaRecorderCli && mediaRecorderCli.state === 'recording') return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/ogg';
+      mediaRecorderCli = new MediaRecorder(stream, { mimeType });
+      audioChunksCli = [];
+      mediaRecorderCli.ondataavailable = e => { if (e.data.size > 0) audioChunksCli.push(e.data); };
+      mediaRecorderCli.start();
+      const btn = document.getElementById('btn-voz-cli');
+      btn.classList.add('grabando');
+      document.getElementById('voz-label-cli').textContent = '🔴 Grabando... suelta para enviar';
+    } catch(e) {
+      document.getElementById('voz-estado-cli').textContent = 'No se pudo acceder al micrófono';
+    }
+  }
+
+  function enviarVozCliente() {
+    if (!mediaRecorderCli || mediaRecorderCli.state !== 'recording') return;
+    mediaRecorderCli.stop();
+    mediaRecorderCli.stream.getTracks().forEach(t => t.stop());
+    mediaRecorderCli.onstop = () => {
+      const blob = new Blob(audioChunksCli, { type: mediaRecorderCli.mimeType });
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        socket.emit('voz:cliente_enviar', { audio: reader.result, mimeType: mediaRecorderCli.mimeType });
+        document.getElementById('voz-estado-cli').textContent = 'Mensaje enviado';
+        setTimeout(() => { document.getElementById('voz-estado-cli').textContent = ''; }, 2500);
+      };
+      reader.readAsDataURL(blob);
+      const btn = document.getElementById('btn-voz-cli');
+      btn.classList.remove('grabando');
+      document.getElementById('voz-label-cli').textContent = 'Mantén para hablarle al chofer';
+    };
+  }
 
   function sonarConfirmacion() {
     try {
