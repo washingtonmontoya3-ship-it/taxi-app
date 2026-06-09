@@ -58,6 +58,8 @@ def static_files(filename):
 @socketio.on('connect')
 def on_connect():
     print(f'[+] Conectado: {request.sid}')
+    # Enviar lista actual de taxis al nuevo cliente
+    emit('taxis:actualizar', list(taxis.values()))
 
 
 @socketio.on('disconnect')
