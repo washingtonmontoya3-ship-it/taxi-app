@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import sys
+import os
 import math
 import datetime
 import json
@@ -22,11 +23,29 @@ VAPID_EMAIL = "mailto:washingtonmontoya3@gmail.com"
 app = Flask(__name__, static_folder='public')
 socketio = SocketIO(app, cors_allowed_origins='*', async_mode='threading')
 
+ADMIN_PASSWORD = 'taxi2024'
+BLOQUEADOS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bloqueados.json')
+
+def cargar_bloqueados():
+    try:
+        with open(BLOQUEADOS_FILE, 'r', encoding='utf-8') as f:
+            return set(json.load(f))
+    except Exception:
+        return set()
+
+def guardar_bloqueados():
+    try:
+        with open(BLOQUEADOS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(list(bloqueados), f, ensure_ascii=False)
+    except Exception as e:
+        print(f'[ADMIN] No se pudo guardar bloqueados: {e}')
+
 # Estado del sistema en memoria
 taxis = {}         # sid -> dict con datos del chofer
 solicitudes = {}   # clienteSid -> dict con datos del cliente
 historial = []     # lista de carreras completadas
 suscripciones = {} # sid -> push subscription dict
+bloqueados = cargar_bloqueados()
 
 
 def get_local_ip():
@@ -64,6 +83,47 @@ def api_historial():
 def vapid_public_key():
     return jsonify({'key': VAPID_PUBLIC_KEY})
 
+@app.route('/admin')
+def admin_page():
+    pwd = request.args.get('pwd', '')
+    if pwd != ADMIN_PASSWORD:
+        return '<h2 style="font-family:sans-serif;padding:40px">Acceso denegado.<br><small>Agrega <b>?pwd=tu_contrasena</b> a la URL</small></h2>', 403
+    return send_from_directory('public', 'admin.html')
+
+@app.route('/api/admin/estado')
+def admin_estado():
+    if request.args.get('pwd') != ADMIN_PASSWORD:
+        return jsonify({'error': 'No autorizado'}), 403
+    return jsonify({'taxis': list(taxis.values()), 'bloqueados': sorted(list(bloqueados))})
+
+@app.route('/api/admin/bloquear', methods=['POST'])
+def admin_bloquear():
+    if request.args.get('pwd') != ADMIN_PASSWORD:
+        return jsonify({'error': 'No autorizado'}), 403
+    nombre = request.json.get('nombre', '').lower().strip()
+    if not nombre:
+        return jsonify({'error': 'Nombre vacio'}), 400
+    bloqueados.add(nombre)
+    guardar_bloqueados()
+    # Expulsar al chofer si está conectado ahora
+    for sid, t in list(taxis.items()):
+        if t['nombre'].lower().strip() == nombre:
+            socketio.emit('chofer:bloqueado', to=sid)
+            del taxis[sid]
+    socketio.emit('taxis:actualizar', list(taxis.values()))
+    print(f'[ADMIN] Bloqueado: {nombre}')
+    return jsonify({'ok': True, 'bloqueados': sorted(list(bloqueados))})
+
+@app.route('/api/admin/desbloquear', methods=['POST'])
+def admin_desbloquear():
+    if request.args.get('pwd') != ADMIN_PASSWORD:
+        return jsonify({'error': 'No autorizado'}), 403
+    nombre = request.json.get('nombre', '').lower().strip()
+    bloqueados.discard(nombre)
+    guardar_bloqueados()
+    print(f'[ADMIN] Desbloqueado: {nombre}')
+    return jsonify({'ok': True, 'bloqueados': sorted(list(bloqueados))})
+
 @app.route('/<path:filename>')
 def static_files(filename):
     return send_from_directory('public', filename)
@@ -96,9 +156,14 @@ def on_disconnect():
 @socketio.on('chofer:registrar')
 def chofer_registrar(data):
     sid = request.sid
+    nombre = data.get('nombre', 'Chofer')
+    if nombre.lower().strip() in bloqueados:
+        emit('chofer:bloqueado')
+        print(f'[ADMIN] Intento de acceso bloqueado: {nombre}')
+        return
     taxis[sid] = {
         'id': sid,
-        'nombre': data.get('nombre', 'Chofer'),
+        'nombre': nombre,
         'numero': data.get('numero', ''),
         'disponible': True,
         'lat': None,

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Taxi App</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f172a; color: #f1f5f9; min-height: 100vh; padding: 24px 20px; }
+  h1 { font-size: 1.5rem; color: #60a5fa; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 0.85rem; margin-bottom: 28px; }
+  .card { background: #1e293b; border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #334155; }
+  .card h2 { font-size: 0.78rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 16px; }
+  .chofer-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid #1e293b; }
+  .chofer-row:last-child { border-bottom: none; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dot.disp { background: #22c55e; }
+  .dot.ocup { background: #ef4444; }
+  .chofer-info { flex: 1; }
+  .chofer-nombre { font-weight: 600; font-size: 0.9rem; }
+  .chofer-numero { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .btn-bloquear { padding: 7px 14px; background: #dc2626; color: white; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+  .btn-bloquear:active { background: #b91c1c; }
+  .btn-desbloquear { padding: 7px 14px; background: #22c55e; color: white; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+  .btn-desbloquear:active { background: #16a34a; }
+  .bloquear-form { display: flex; gap: 10px; margin-top: 4px; }
+  .bloquear-form input { flex: 1; padding: 11px 14px; background: #0f172a; border: 1px solid #334155; border-radius: 10px; color: #f1f5f9; font-size: 0.9rem; outline: none; }
+  .bloquear-form input:focus { border-color: #dc2626; }
+  .bloquear-form button { padding: 11px 18px; background: #dc2626; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.9rem; }
+  .vacio { color: #475569; font-size: 0.88rem; padding: 10px 0; }
+  .bloq-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #1e293b; }
+  .bloq-row:last-child { border-bottom: none; }
+  .bloq-nombre { flex: 1; font-size: 0.9rem; color: #fca5a5; }
+  .badge-bloq { background: #450a0a; color: #fca5a5; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; font-weight: 700; }
+  .btn-reload { display: flex; align-items: center; gap: 6px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; color: #94a3b8; padding: 9px 16px; cursor: pointer; font-size: 0.85rem; margin-bottom: 20px; }
+  .alerta { background: #1c1917; border: 1px solid #f59e0b; border-radius: 12px; padding: 14px 16px; color: #fbbf24; font-size: 0.85rem; margin-bottom: 20px; }
+</style>
+</head>
+<body>
+
+<h1>Panel de Administrador</h1>
+<p class="subtitle">Solo el dueño puede ver esta página</p>
+
+<div class="alerta">
+  La contraseña está en la URL. No compartas ese link con nadie.
+</div>
+
+<button class="btn-reload" onclick="cargar()">🔄 Actualizar</button>
+
+<!-- Choferes activos -->
+<div class="card">
+  <h2>Choferes conectados ahora</h2>
+  <div id="lista-activos"><p class="vacio">Cargando...</p></div>
+</div>
+
+<!-- Bloquear por nombre -->
+<div class="card">
+  <h2>Bloquear un chofer</h2>
+  <p style="font-size:0.82rem;color:#94a3b8;margin-bottom:14px">Escribe el nombre exacto del chofer que quieres desactivar</p>
+  <div class="bloquear-form">
+    <input type="text" id="input-bloquear" placeholder="Nombre del chofer">
+    <button onclick="bloquear()">Bloquear</button>
+  </div>
+</div>
+
+<!-- Lista de bloqueados -->
+<div class="card">
+  <h2>Choferes bloqueados</h2>
+  <div id="lista-bloqueados"><p class="vacio">Cargando...</p></div>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const pwd = params.get('pwd') || '';
+
+  async function cargar() {
+    const res = await fetch(`/api/admin/estado?pwd=${pwd}`);
+    const data = await res.json();
+
+    // Activos
+    const divActivos = document.getElementById('lista-activos');
+    if (!data.taxis.length) {
+      divActivos.innerHTML = '<p class="vacio">No hay choferes conectados ahora</p>';
+    } else {
+      divActivos.innerHTML = data.taxis.map(t => `
+        <div class="chofer-row">
+          <div class="dot ${t.disponible ? 'disp' : 'ocup'}"></div>
+          <div class="chofer-info">
+            <div class="chofer-nombre">${t.nombre}</div>
+            <div class="chofer-numero">${t.numero || 'Sin número'} · ${t.disponible ? 'Disponible' : 'Ocupado'}</div>
+          </div>
+          <button class="btn-bloquear" onclick="bloquearNombre('${t.nombre.replace(/'/g,"\\'")}')">Bloquear</button>
+        </div>`).join('');
+    }
+
+    // Bloqueados
+    const divBloq = document.getElementById('lista-bloqueados');
+    if (!data.bloqueados.length) {
+      divBloq.innerHTML = '<p class="vacio">No hay choferes bloqueados</p>';
+    } else {
+      divBloq.innerHTML = data.bloqueados.map(n => `
+        <div class="bloq-row">
+          <span class="badge-bloq">BLOQUEADO</span>
+          <span class="bloq-nombre">${n}</span>
+          <button class="btn-desbloquear" onclick="desbloquear('${n.replace(/'/g,"\\'")}')">Desbloquear</button>
+        </div>`).join('');
+    }
+  }
+
+  async function bloquearNombre(nombre) {
+    if (!confirm(`¿Bloquear a "${nombre}"?\n\nNo podrá volver a entrar a la app.`)) return;
+    const res = await fetch(`/api/admin/bloquear?pwd=${pwd}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre })
+    });
+    const data = await res.json();
+    if (data.ok) { alert(`"${nombre}" bloqueado. Si estaba conectado, ya fue expulsado.`); cargar(); }
+  }
+
+  async function bloquear() {
+    const nombre = document.getElementById('input-bloquear').value.trim();
+    if (!nombre) { alert('Escribe el nombre del chofer.'); return; }
+    await bloquearNombre(nombre);
+    document.getElementById('input-bloquear').value = '';
+  }
+
+  async function desbloquear(nombre) {
+    if (!confirm(`¿Desbloquear a "${nombre}"?\n\nPodrá volver a entrar a la app.`)) return;
+    const res = await fetch(`/api/admin/desbloquear?pwd=${pwd}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre })
+    });
+    const data = await res.json();
+    if (data.ok) { alert(`"${nombre}" desbloqueado. Ya puede volver a entrar.`); cargar(); }
+  }
+
+  cargar();
+  setInterval(cargar, 10000); // actualiza cada 10 segundos
+</script>
+</body>
+</html>

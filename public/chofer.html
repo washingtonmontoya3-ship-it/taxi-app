@@ -306,6 +306,19 @@
     socket.emit('chofer:terminar_turno');
   }
 
+  socket.on('chofer:bloqueado', () => {
+    localStorage.setItem('chofer_activo', 'false');
+    if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('solicitud-overlay').classList.remove('activa');
+    document.getElementById('registro-card').style.display = 'none';
+    document.getElementById('turno-terminado-card').style.display = 'block';
+    document.querySelector('.turno-terminado-msg .icono').textContent = '🚫';
+    document.querySelector('.turno-terminado-msg h2').textContent = 'Acceso desactivado';
+    document.querySelector('.turno-terminado-msg p').textContent = 'El administrador ha desactivado tu acceso a esta aplicación.';
+    document.querySelector('.btn-nuevo-turno').style.display = 'none';
+  });
+
   socket.on('chofer:turno_terminado', () => {
     localStorage.setItem('chofer_activo', 'false');
     if (watchId) { navigator.geolocation.clearWatch(watchId); watchId = null; }
