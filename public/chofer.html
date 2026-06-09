@@ -488,7 +488,7 @@
         const osc = ctx.createOscillator(), gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
         osc.frequency.value = 1050;
-        gain.gain.setValueAtTime(8.0, ctx.currentTime + t);
+        gain.gain.setValueAtTime(20.0, ctx.currentTime + t);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.32);
         osc.start(ctx.currentTime + t); osc.stop(ctx.currentTime + t + 0.32);
       });
